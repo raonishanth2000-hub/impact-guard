@@ -1,0 +1,3 @@
+# Demo mode requires NOTHING beyond the Python standard library.
+# boto3 is needed only for live AWS mode (CloudTrail) and Bedrock explanations.
+boto3>=1.34.0

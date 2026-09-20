@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Impact Guard - an investigation layer over CloudTrail.
+  One Lambda behind an HTTP API. No database, no VPC, no queues.
+
+Parameters:
+  DataSource:
+    Type: String
+    Default: aws
+    AllowedValues: [aws, demo]
+    Description: aws = live CloudTrail, demo = generated sample events.
+  BedrockModelId:
+    Type: String
+    Default: anthropic.claude-3-5-sonnet-20240620-v1:0
+    Description: Must be enabled in your account under Bedrock > Model access.
+  BedrockRegion:
+    Type: String
+    Default: ap-south-1
+    Description: Bedrock model availability differs from your workload region.
+  CorsAllowOrigin:
+    Type: String
+    Default: '*'
+    Description: Set to your frontend origin for anything beyond a demo.
+
+Globals:
+  Function:
+    # API Gateway caps at 29s, so this is the practical ceiling for a sync call.
+    Timeout: 29
+    MemorySize: 512
+    Runtime: python3.12
+    Architectures: [arm64]
+
+Resources:
+  ChangeDetectiveApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      CorsConfiguration:
+        AllowOrigins: [!Ref CorsAllowOrigin]
+        AllowHeaders: [content-type]
+        AllowMethods: [GET, POST, OPTIONS]
+
+  ChangeDetectiveFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: impact-guard
+      CodeUri: ../backend/
+      Handler: lambda_handler.handler
+      Environment:
+        Variables:
+          # NOTE: AWS_REGION is reserved and set by the Lambda runtime itself,
+          # so it must not be declared here. config.py reads it automatically.
+          DATA_SOURCE: !Ref DataSource
+          BEDROCK_REGION: !Ref BedrockRegion
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+          CORS_ALLOW_ORIGIN: !Ref CorsAllowOrigin
+      Policies:
+        # Least privilege: read-only CloudTrail lookup plus Bedrock invoke.
+        - Statement:
+            - Sid: ReadCloudTrailManagementEvents
+              Effect: Allow
+              # LookupEvents does not support resource-level permissions.
+              Action: [cloudtrail:LookupEvents]
+              Resource: '*'
+            - Sid: InvokeBedrockForExplanations
+              Effect: Allow
+              Action: [bedrock:InvokeModel]
+              Resource:
+                - 'arn:aws:bedrock:*::foundation-model/anthropic.claude-*'
+                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/*anthropic.claude-*'
+      Events:
+        Health:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ChangeDetectiveApi
+            Path: /health
+            Method: GET
+        ListEvents:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ChangeDetectiveApi
+            Path: /events
+            Method: GET
+        Investigate:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ChangeDetectiveApi
+            Path: /investigate
+            Method: POST
+        Explain:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ChangeDetectiveApi
+            Path: /explain
+            Method: POST
+
+Outputs:
+  ApiUrl:
+    Description: Base URL for the API. Set this as VITE_API_BASE in the frontend.
+    Value: !Sub 'https://${ChangeDetectiveApi}.execute-api.${AWS::Region}.amazonaws.com'
+  FunctionName:
+    Description: Lambda function name, for tailing logs with sam logs.
+    Value: !Ref ChangeDetectiveFunction

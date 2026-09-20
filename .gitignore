@@ -1,0 +1,16 @@
+.env
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+dist/
+.aws-sam/
+samconfig.toml
+.DS_Store
+
+# Deployed endpoint. The API has no authentication, so publishing its URL
+# makes this account's CloudTrail metadata readable by anyone who finds it.
+# Recreate locally from `python3 tools/deploy.py` output.
+.env.production
+.env.local

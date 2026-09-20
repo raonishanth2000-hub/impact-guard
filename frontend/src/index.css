@@ -1,0 +1,387 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Poppins:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Impact Guard — design tokens.
+
+   One warm neutral ground, four semantic colours used sparingly. Nothing in a
+   component should introduce a colour that is not defined here.
+
+   Typography: Inter for the interface, IBM Plex Mono for anything an engineer
+   would copy-paste — timestamps, resource ids, principals, parameters.
+--------------------------------------------------------------------------- */
+@theme {
+  /* --- Ground ------------------------------------------------------------ */
+  --color-canvas: #f6f4ef;      /* page */
+  --color-sunken: #ece9e2;      /* recessed areas, inset rows */
+  --color-surface: #ffffff;     /* cards and panels */
+  --color-rule: #ddd9d0;        /* borders and dividers */
+  --color-rule-soft: #e8e4dc;   /* lighter internal dividers */
+
+  /* --- Ink ----------------------------------------------------------------
+     Three tiers, every one of which clears WCAG AA (4.5:1) on the darkest
+     surface in the system (--color-sunken). Measured, not estimated. The gap
+     between tier 2 and 3 is modest on purpose: hierarchy is carried mainly by
+     size and weight, so the colours only need to be distinguishable.          */
+  --color-ink: #252525;         /* primary text        — 12.6:1 on sunken */
+  --color-ink-2: #5c584f;       /* secondary text      —  5.8:1 on sunken */
+  --color-ink-3: #6c6861;       /* tertiary / labels   —  4.6:1 on sunken */
+
+  /* --- Semantic -----------------------------------------------------------
+     Each hue has a display value (fills, dots, rules — no contrast floor) and
+     an -ink value for text, darkened until it clears AA on every surface.     */
+  /* Accent is a vivid orange. White text on it is only 2.35:1, so the primary
+     button pairs it with near-black ink instead (6.5:1) — which keeps the hue
+     at full strength rather than muddying it to satisfy contrast. Accent TEXT
+     on a light ground needs the much darker -ink value.                        */
+  --color-accent: #ff8a3d;      /* marks, dots, rules, primary button fill */
+  --color-accent-hover: #f57a28;/* button hover — 5.9:1 with ink text */
+  --color-accent-ink: #a34a08;  /* accent TEXT  — 4.9:1 on sunken */
+  --color-accent-wash: #fff1e6;
+
+  --color-positive: #667a62;    /* sage: fills and dots */
+  --color-positive-ink: #5a6c57;/* sage TEXT            — 4.7:1 on sunken */
+  --color-positive-wash: #eef1ed;
+
+  --color-warning: #b58a3a;     /* amber: fills and dots */
+  --color-warning-ink: #806123; /* amber TEXT           — 4.7:1 on sunken */
+  --color-warning-wash: #f7f0e1;
+
+  --color-severe: #a94b4b;      /* deep red — 4.6:1 on sunken, text-safe */
+  --color-severe-wash: #f8eceb;
+
+  /* --- Type -------------------------------------------------------------- */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* --- Radius: restrained, differentiated by element size ---------------- */
+  --radius-control: 6px;
+  --radius-button: 8px;
+  --radius-card: 10px;
+  --radius-container: 12px;
+
+  /* --- Elevation: grounded, never floating ------------------------------- */
+  --shadow-subtle: 0 1px 3px rgba(30, 25, 20, 0.06);
+  --shadow-raised: 0 2px 8px rgba(30, 25, 20, 0.08);
+  --shadow-panel: -8px 0 32px rgba(30, 25, 20, 0.10);
+}
+
+/* min-height, not height: a fixed 100% clamps #root to the viewport, so any
+   page taller than one screen overflows its own container. */
+html, body, #root { min-height: 100%; }
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv05" 1, "ss01" 1;
+}
+
+/* Numbers that are compared down a column must not shift width. */
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+/* Focus is always visible, always the same, never removed. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+:where(a, button, input, select, textarea, summary, [tabindex]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+::selection { background: var(--color-accent-wash); color: var(--color-accent-ink); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #d6d1c7;
+  border-radius: 999px;
+  border: 3px solid var(--color-canvas);
+}
+::-webkit-scrollbar-thumb:hover { background: #c4beb2; }
+
+/* --- Motion: 150–250ms, natural easing, no bounce ------------------------ */
+@keyframes settle {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+/* Progressive disclosure: sections settle in order rather than all at once. */
+.settle   { animation: settle 220ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+.settle-1 { animation-delay: 40ms; }
+.settle-2 { animation-delay: 90ms; }
+.settle-3 { animation-delay: 140ms; }
+
+@keyframes shimmer {
+  from { background-position: -160% 0; }
+  to   { background-position: 160% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #ece9e2 25%, #f3f1ec 50%, #ece9e2 75%);
+  background-size: 160% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-control);
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: none; }
+}
+.slide-in { animation: slide-in 200ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+
+@keyframes lift {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.lift { animation: lift 180ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+
+/* Fires once per node when its change occurs during replay. */
+@keyframes node-pulse {
+  0%   { opacity: 0; transform: scale(0.98); }
+  35%  { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+.node-pulse { animation: node-pulse 1.2s ease-out infinite; }
+
+/* React Flow surface should inherit our tokens, not its default theme. */
+.react-flow__controls-button {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-rule);
+  color: var(--color-ink-2);
+}
+.react-flow__controls-button:hover { background: var(--color-sunken); }
+.react-flow__controls-button svg { fill: currentColor; }
+.react-flow__edge-text { font-family: var(--font-mono); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .skeleton { background: var(--color-sunken); }
+}
+
+/* ---------------------------------------------------------------------------
+   Landing surface — Impact Guard.
+
+   Deliberately NOT the console palette. A marketing page that looked identical
+   to the product would make neither feel considered. This is the console's
+   palette inverted and pushed much darker: a near-black warm ground (brown
+   tinted, never blue-black), the console's canvas colour promoted to text, and
+   the identical #FF8A3D accent so the two surfaces are obviously one product.
+
+   Everything animated here is CSS or IntersectionObserver driven. Nothing
+   depends on a requestAnimationFrame loop, so the page renders correctly even
+   when the document is not compositing.
+--------------------------------------------------------------------------- */
+
+
+/* --- Film grain -----------------------------------------------------------
+   A fixed, non-interactive noise layer. Stops large dark fields from banding
+   and is the cheapest way to make a flat colour read as a surface.           */
+
+/* --- Aurora ---------------------------------------------------------------
+   Two slow, offset radial fields. Provides depth behind the hero without a
+   gradient wash over the whole page.                                         */
+.aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aurora::before,
+.aurora::after {
+  content: '';
+  position: absolute;
+  width: 760px; height: 760px;
+  border-radius: 50%;
+  filter: blur(120px);
+}
+.aurora::before {
+  top: -280px; left: 50%;
+  margin-left: -560px;
+  background: radial-gradient(circle, rgba(255,138,61,0.16), transparent 68%);
+  animation: aurora-a 22s ease-in-out infinite;
+}
+.aurora::after {
+  top: -200px; left: 50%;
+  margin-left: 120px;
+  background: radial-gradient(circle, rgba(143,168,138,0.10), transparent 68%);
+  animation: aurora-b 27s ease-in-out infinite;
+}
+@keyframes aurora-a {
+  0%,100% { transform: translate3d(0,0,0) scale(1); }
+  50%     { transform: translate3d(70px,40px,0) scale(1.12); }
+}
+@keyframes aurora-b {
+  0%,100% { transform: translate3d(0,0,0) scale(1.08); }
+  50%     { transform: translate3d(-80px,30px,0) scale(1); }
+}
+
+/* --- Hairline grid --------------------------------------------------------- */
+.grid-field {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(246,244,239,0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(246,244,239,0.028) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+}
+
+/* --- 3D scene -------------------------------------------------------------
+   Real perspective transforms rather than WebGL: the scene is a handful of
+   planes and points, which CSS renders natively, accessibly and without a
+   3D dependency.                                                             */
+.scene { perspective: 1200px; perspective-origin: 50% 42%; }
+
+.stack {
+  transform-style: preserve-3d;
+  animation: stack-orbit 32s linear infinite;
+}
+@keyframes stack-orbit {
+  from { transform: rotateX(60deg) rotateZ(0deg); }
+  to   { transform: rotateX(60deg) rotateZ(360deg); }
+}
+.plane { transform-style: preserve-3d; }
+
+/* Points of light riding the top plane. */
+@keyframes node-bob {
+  0%,100% { transform: translateZ(0); opacity: .55; }
+  50%     { transform: translateZ(22px); opacity: 1; }
+}
+.node-bob { animation: node-bob 5.5s ease-in-out infinite; }
+
+/* --- Scroll reveal --------------------------------------------------------
+   Driven by IntersectionObserver, which is event-based rather than frame
+   based, so it fires reliably.                                               */
+/* Deliberately a keyframe with no fill-mode rather than a transition.
+   A transition strands the element at its start value if frames never run —
+   leaving the section permanently invisible. Here the resting state is fully
+   visible, and the entrance animation only plays over the top of it. If the
+   animation never runs, the content is simply there. */
+.reveal { opacity: 0; }
+.reveal-in { animation: reveal-in .7s cubic-bezier(.22,1,.36,1); }
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* --- Spotlight card -------------------------------------------------------
+   Pure CSS: an accent bloom that grows from the top edge on hover. No pointer
+   tracking, so it cannot fail silently.                                      */
+.spot { position: relative; isolation: isolate; overflow: hidden; }
+.spot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: radial-gradient(420px circle at 50% -20%, rgba(255,138,61,0.14), transparent 62%);
+  transition: opacity .35s ease;
+}
+.spot:hover::after { opacity: 1; }
+
+/* --- Marquee --------------------------------------------------------------- */
+.marquee { overflow: hidden; mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent); }
+.marquee-track { display: flex; width: max-content; animation: marquee 38s linear infinite; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* --- Beam divider ---------------------------------------------------------- */
+.beam { position: relative; height: 1px; background: var(--l-line); overflow: hidden; }
+.beam::after {
+  content: '';
+  position: absolute; inset: 0;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, var(--l-accent), transparent);
+  animation: beam-run 6s ease-in-out infinite;
+}
+@keyframes beam-run {
+  0%   { transform: translateX(-120%); opacity: 0; }
+  35%  { opacity: .85; }
+  100% { transform: translateX(400%); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stack, .node-bob, .marquee-track, .beam::after,
+  .aurora::before, .aurora::after { animation: none !important; }
+  .stack { transform: rotateX(60deg) rotateZ(24deg); }
+  .reveal, .reveal-in { opacity: 1; animation: none; }
+}
+
+/* ===========================================================================
+   Landing surface — dark espresso.
+   The console is a working tool on warm paper; the landing is the room lights
+   going down before the demo. Only the tokens, the display face and the grain
+   live here — the decorative layers (.aurora, .grid-field, .scene, .marquee,
+   .beam) are defined unscoped above and must not be redefined at this higher
+   specificity, or they lose their animation.
+   =========================================================================== */
+
+[data-surface="landing"] .display { font-family: Poppins, Inter, sans-serif; }
+
+[data-surface="landing"] {
+  --l-void:      #0a0806;   /* page */
+  --l-raised:    #15100d;   /* cards */
+  --l-elevated:  #1d1713;   /* hovered / lifted */
+  --l-line:      rgba(246, 244, 239, 0.11);
+  --l-line-soft: rgba(246, 244, 239, 0.06);
+  --l-text:      #f6f4ef;   /* 18.6:1 on void */
+  --l-muted:     #c4bcb1;   /* 11.2:1 */
+  --l-faint:     #9c948a;   /*  6.6:1 — still AA at 11px */
+  --l-accent:    #ff8a3d;
+  --l-sage:      #9ab394;
+
+  position: relative;
+  background: var(--l-void);
+  color: var(--l-text);
+}
+
+/* Film grain: stops a large dark field from banding. */
+[data-surface="landing"]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* ===========================================================================
+   Reveals — three techniques, none of which translate the element vertically.
+     focus  blurred to sharp, the page coming into focus
+     wipe   a clip-path sweep, like a line printing left to right
+     draw   a rule drawn from its origin
+   Transitions, not keyframes: if transitions never run, the class swap still
+   lands the final computed style, so the content is readable either way.
+   =========================================================================== */
+
+[data-surface="landing"] .rv {
+  transition-property: opacity, filter, transform, clip-path;
+  transition-duration: 620ms;
+  transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+[data-surface="landing"] .rv-focus    { opacity: 0; filter: blur(9px); transform: scale(0.988); }
+[data-surface="landing"] .rv-focus.in { opacity: 1; filter: blur(0);   transform: none; }
+
+[data-surface="landing"] .rv-wipe     { opacity: 0; clip-path: inset(0 100% 0 0); }
+[data-surface="landing"] .rv-wipe.in  { opacity: 1; clip-path: inset(0 -2% 0 0); }
+
+[data-surface="landing"] .rv-draw     { transform: scaleX(0); transform-origin: left center; }
+[data-surface="landing"] .rv-draw.in  { transform: scaleX(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-surface="landing"] .rv { transition: none; }
+  [data-surface="landing"] .rv-focus,
+  [data-surface="landing"] .rv-wipe { opacity: 1; filter: none; transform: none; clip-path: none; }
+  [data-surface="landing"] .rv-draw { transform: none; }
+}

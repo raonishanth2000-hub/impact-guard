@@ -1,0 +1,36 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadCloudTrailManagementEvents",
+      "Effect": "Allow",
+      "Action": [
+        "cloudtrail:LookupEvents"
+      ],
+      "Resource": "*",
+      "_comment": "cloudtrail:LookupEvents does not support resource-level permissions, so Resource must be *. It is read-only and returns only management events."
+    },
+    {
+      "Sid": "InvokeBedrockForExplanations",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:*::foundation-model/anthropic.claude-*",
+        "arn:aws:bedrock:*:*:inference-profile/*anthropic.claude-*"
+      ],
+      "_comment": "Scoped to the Claude model family. Narrow further to the exact model id you enable. The inference-profile ARN is required in regions that only expose cross-region profiles."
+    },
+    {
+      "Sid": "WriteOwnLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:log-group:/aws/lambda/impact-guard*"
+    }
+  ]
+}
