@@ -35,7 +35,12 @@ Impact Guard compresses that into one query. Enter the incident time; get back:
 - each change **normalized into a sentence** — what changed, which resource, who
   did it, when, which service,
 - a **relevance ranking** produced by explicit rules, with the reasons shown,
-- a **Bedrock explanation** of the shortlist and concrete next checks.
+- **plain-language findings** for each change: what it did, what could go wrong,
+  and what to check before shipping something similar.
+
+> A Bedrock layer exists to reword those findings, but it is **switched off** —
+> see [Deployment status](#5a-deployment-status). Everything above is produced
+> by the deterministic engine and is unaffected.
 
 ### The language rule
 
@@ -101,10 +106,10 @@ deployed behaviour cannot drift apart.
 
 The ranking must be reproducible and explainable. If a model decided what was
 relevant, we could not tell an engineer *why* a change was surfaced, and the answer
-would change between runs. So the rules pick and rank; Bedrock explains what the
-rules picked. That also means **the product still works with AI switched off** —
-which is exactly what happens when a model is not enabled, and it degrades to
-"slightly less fluent" instead of "broken".
+would change between runs. So the rules pick and rank; Bedrock, when available,
+only rewords what the rules picked. That also means **the product still works with the model switched off** —
+which is exactly the situation in the deployed build. It degrades to "slightly
+less fluent", not to "broken".
 
 ## 5. AWS services used
 
@@ -229,9 +234,17 @@ aws configure
 **b. CloudTrail** — a trail is *not* required. `LookupEvents` serves the last 90
 days of management events in every region by default.
 
-**c. Enable a Bedrock model** — this is the step people miss. In the AWS console go
-to **Bedrock → Model access**, request access to a Claude model, wait for it to
-show *Access granted*, then copy its exact model id into `BEDROCK_MODEL_ID`.
+**c. Bedrock (optional)** — not required, and off by default in `.env`. The
+console's old *Model access* page has been retired; access is now two API calls.
+Check where an account stands with:
+
+```bash
+python3 tools/check_bedrock_access.py --region ap-south-1
+```
+
+It names the precondition that is actually failing and prints the commands to fix
+it. On the account this was built with, model access requests are denied at the
+account level, so the layer stays off.
 
 Some regions expose only cross-region **inference profiles**, in which case the id
 needs a region prefix (`apac.anthropic.claude-…`, `us.anthropic.claude-…`). If you
@@ -402,9 +415,10 @@ receive no service-specific bonuses.
   invisible to that signal.
 - The signal weights are **hand-tuned judgement**, validated against the demo
   scenario, not learned from incident data.
-- Live CloudTrail and real Bedrock calls were **not executable in the build
-  environment** (no credentials, no model access). Those paths are covered by
-  stubbed tests, not by a real AWS round trip.
+- **Bedrock has never executed.** The account is blocked from requesting model
+  access, so that path is covered by stubbed tests only, never a real round trip.
+  CloudTrail, by contrast, is exercised for real: the deployed API reads live
+  management events on every request.
 
 ---
 
