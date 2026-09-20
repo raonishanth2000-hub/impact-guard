@@ -127,8 +127,12 @@ cost setup time.
 
 What is actually running, as opposed to what is implemented:
 
+**Live at [impact-guard.nishanthrao.com](https://impact-guard.nishanthrao.com)** —
+frontend on GitHub Pages, API on AWS.
+
 | | Status |
 |---|---|
+| Frontend | **Live.** `impact-guard.nishanthrao.com`, HTTPS enforced. |
 | CloudTrail `LookupEvents` | **Live.** Real management events, 90-day window, no trail required. |
 | Lambda + API Gateway | **Deployed.** `python3.12`, least-privilege role whose only permission is `cloudtrail:LookupEvents`. |
 | Deterministic engine | **Live.** Scoring, ranking, dependency evidence, plain-language briefing. |
@@ -148,6 +152,24 @@ with it off.
 
 This is the architecture behaving as designed. The engine detects; the model only
 ever reworded what the engine had already decided. Losing it costs no finding.
+
+
+### Why the frontend is not on CloudFront
+
+This AWS account is not verified for CloudFront (`Your account must be verified
+before you can add new CloudFront resources`), and S3 website hosting is
+HTTP-only, so there is no route to HTTPS on a custom domain through AWS here.
+Route 53 Domains is likewise unavailable on this account. The static bundle
+therefore ships to GitHub Pages, which issues a managed certificate and needs a
+single CNAME.
+
+The API is unaffected — it runs on Lambda behind API Gateway, and every
+investigation still reads CloudTrail from AWS.
+
+One consequence: Pages has no rewrite rules, so a deep link such as `/briefing`
+returns HTTP 404. `404.html` is a copy of `index.html`, so the app boots and
+React Router renders the right view — the status code is simply wrong.
+CloudFront would return 200.
 
 ## 6. How AI is used
 
