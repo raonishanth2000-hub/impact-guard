@@ -85,9 +85,10 @@ export function Tag({ children, tone = 'neutral' }) {
 export function Section({ id, title, action, children, className = '' }) {
   return (
     <section id={id} className={`scroll-mt-24 ${className}`}>
-      <div className="flex items-baseline justify-between gap-4 border-b border-rule pb-2.5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1
+                      border-b border-rule pb-2.5">
         <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
-        {action && <div className="shrink-0 text-[12px] text-ink-3">{action}</div>}
+        {action && <div className="text-[12px] text-ink-3">{action}</div>}
       </div>
       <div className="pt-4">{children}</div>
     </section>

@@ -1,5 +1,6 @@
 import ControlBar from '../components/ControlBar'
 import IncidentBanner from '../components/IncidentBanner'
+import FindingsSummary from '../components/FindingsSummary'
 import { Button } from '../components/primitives'
 import { useInvestigation } from '../state/InvestigationContext'
 import { toLocalInputValue, formatClock12 } from '../lib/format'
@@ -9,7 +10,10 @@ import { CircleAlert, RotateCw, Clock } from 'lucide-react'
 /** Skeleton mirrors the real layout so nothing jumps when the result lands. */
 function Skeleton() {
   return (
-    <div aria-busy="true" aria-label="Running investigation">
+    <div aria-busy="true" aria-label="Analysing change">
+      <p className="mb-5 text-[13px] text-ink-2" role="status">
+        Analysing changes around the incident time…
+      </p>
       <div className="skeleton h-3 w-24" />
       <div className="skeleton mt-4 h-9 w-[420px] max-w-full" />
       <div className="skeleton mt-3 h-4 w-64" />
@@ -155,15 +159,21 @@ export default function InvestigationPage() {
             changes={result.changes}
             dataSource={result.data_source}
           />
+
+          {/* The counts say how much happened; this says what happened. Without
+              it the page ended on four numbers and a single quiet link. */}
+          <div className="mt-9">
+            <FindingsSummary result={result} />
+          </div>
         </PageFrame>
       )}
 
       {!result && !loading && !error && (
         <div className="py-20 text-center">
-          <h2 className="text-[17px] font-semibold text-ink">Set the time it broke</h2>
-          <p className="mx-auto mt-2 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-2">
-            Enter the moment the incident began and press Investigate, or load the
-            demo incident to see a worked example.
+          <h2 className="text-[17px] font-semibold text-ink">No analysis yet</h2>
+          <p className="mx-auto mt-2 max-w-[52ch] text-[13.5px] leading-relaxed text-ink-2">
+            Load the demo incident above to see a complete worked example, or enter
+            the moment your own incident began and press Investigate.
           </p>
         </div>
       )}

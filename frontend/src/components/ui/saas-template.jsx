@@ -379,12 +379,12 @@ const Hero = memo(() => (
         <div className="mb-16 flex flex-wrap items-center justify-center gap-3">
           <Link to="/dashboard">
             <LButton variant="default" size="lg">
-              Open the console
+              Analyse a sample change
               <ArrowRight size={16} strokeWidth={2} aria-hidden="true"
                           className="transition-transform duration-200 group-hover/btn:translate-x-0.5" />
             </LButton>
           </Link>
-          <a href="#inside"><LButton variant="secondary" size="lg">See what’s inside</LButton></a>
+          <a href="#inside"><LButton variant="secondary" size="lg">See how it works</LButton></a>
         </div>
       </Reveal>
 

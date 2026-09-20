@@ -159,7 +159,8 @@ function Canvas() {
       </div>
 
       {/* Time machine */}
-      <div className="flex items-center gap-3 rounded-card border border-rule bg-surface px-4 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border
+                      border-rule bg-surface px-4 py-2.5">
         <label htmlFor="time-machine"
                className="shrink-0 text-[11px] font-medium uppercase tracking-[0.07em] text-ink-3">
           Time machine
@@ -171,10 +172,10 @@ function Canvas() {
           max={timeline.length - 1}
           value={cutoffIndex === null ? timeline.length - 1 : cutoffIndex}
           onChange={(e) => { stopReplay(); setCutoffIndex(Number(e.target.value)) }}
-          className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-sunken
-                     accent-[var(--color-accent)]"
+          className="h-1 min-w-[140px] flex-1 cursor-pointer appearance-none rounded-full
+                     bg-sunken accent-[var(--color-accent)]"
         />
-        <span className="w-[86px] shrink-0 text-right font-mono text-[12px] text-ink tnum">
+        <span className="shrink-0 text-right font-mono text-[12px] text-ink tnum sm:w-[86px]">
           {formatClock(timeline[cutoffIndex === null ? timeline.length - 1 : cutoffIndex]?.time)}
           {cutoffIndex === null && <span className="ml-1 text-ink-3">all</span>}
         </span>

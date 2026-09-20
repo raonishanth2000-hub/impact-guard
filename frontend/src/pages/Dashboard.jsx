@@ -66,12 +66,12 @@ export default function Dashboard() {
           </div>
 
           <div className="flex flex-wrap gap-2 sm:shrink-0">
-            <Button variant="secondary" onClick={startDemo} disabled={loading}>
+            <Button variant="primary" onClick={startDemo} disabled={loading}>
               <Play size={14} strokeWidth={1.75} aria-hidden="true" />
-              {loading ? 'Loading' : 'Load demo'}
+              {loading ? 'Analysing…' : 'Analyse a sample change'}
             </Button>
-            <Button variant="primary" onClick={() => navigate('/investigation')}>
-              Start investigation
+            <Button variant="secondary" onClick={() => navigate('/investigation')}>
+              Use my own incident
               <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
             </Button>
           </div>
@@ -160,10 +160,10 @@ export default function Dashboard() {
             <div className="mt-5 flex flex-wrap gap-2">
               <Button variant="primary" onClick={startDemo} disabled={loading}>
                 <Play size={14} strokeWidth={1.75} aria-hidden="true" />
-                {loading ? 'Loading demo' : 'Load demo investigation'}
+                {loading ? 'Analysing…' : 'Analyse a sample change'}
               </Button>
               <Button variant="secondary" onClick={() => navigate('/investigation')}>
-                Set an incident time
+                Use my own incident
               </Button>
             </div>
           </div>

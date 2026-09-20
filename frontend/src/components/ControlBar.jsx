@@ -171,16 +171,16 @@ export default function ControlBar({
               </div>
             </Field>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button onClick={onLoadDemo} disabled={loading} variant="secondary">
                 <Play size={14} strokeWidth={1.75} aria-hidden="true" />
-                Demo
+                Sample change
               </Button>
               <Button onClick={onInvestigate} disabled={loading} variant="primary">
                 {loading
                   ? <LoaderCircle size={14} strokeWidth={2} aria-hidden="true" className="animate-spin" />
                   : <Search size={14} strokeWidth={2} aria-hidden="true" />}
-                {loading ? 'Investigating' : 'Investigate'}
+                {loading ? 'Analysing…' : 'Analyse impact'}
               </Button>
             </div>
           </div>

@@ -18,7 +18,7 @@ import { evidenceFrom, serviceLabel } from '../lib/format'
 
 function ProvenanceLine({ aiOn, modelId }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[11.5px] text-ink-3">
+    <span className="inline-flex min-w-0 items-center gap-1.5 text-[11.5px] text-ink-3">
       <span className={`h-1.5 w-1.5 rounded-full ${aiOn ? 'bg-accent' : 'bg-ink-3/50'}`}
             aria-hidden="true" />
       {aiOn ? 'Amazon Bedrock' : 'Rule-based analysis'}
@@ -89,7 +89,7 @@ function ProvenanceNote({ status, message }) {
     <div className="mb-4 flex items-start gap-2 rounded-control bg-sunken/55 px-2.5 py-2">
       <Info size={13} strokeWidth={1.75} aria-hidden="true"
             className="mt-[3px] shrink-0 text-ink-3" />
-      <p className="flex-1 text-[11.5px] leading-relaxed text-ink-3">
+      <p className="min-w-0 flex-1 text-[11.5px] leading-relaxed text-ink-3">
         Bedrock is not configured, so this assessment is rule-derived.{' '}
         <span className="text-ink-2">{message}</span>
       </p>
@@ -97,7 +97,7 @@ function ProvenanceNote({ status, message }) {
         type="button"
         onClick={() => setDismissed(true)}
         aria-label="Dismiss Bedrock configuration notice"
-        className="-mr-0.5 shrink-0 rounded-control p-1 text-ink-3 transition-colors
+        className="shrink-0 rounded-control p-1 text-ink-3 transition-colors
                    duration-150 cursor-pointer hover:bg-sunken hover:text-ink"
       >
         <X size={12} strokeWidth={2} aria-hidden="true" />
