@@ -31,6 +31,18 @@ function Canvas() {
     setScale(Number(next.toFixed(3)))
   }, [natural])
 
+  // Fit once, automatically, the first time we learn the board overflows.
+  // The default view used to clip the lowest card, which reads as unfinished.
+  const autoFitted = useRef(false)
+  useEffect(() => {
+    if (autoFitted.current || !natural?.width || !boardRef.current) return
+    const box = boardRef.current.getBoundingClientRect()
+    if (natural.width > box.width || natural.height > box.height) {
+      autoFitted.current = true
+      fitToView()
+    }
+  }, [natural, fitToView])
+
   const overflows = !!natural && !!boardRef.current &&
     (natural.width > boardRef.current.clientWidth ||
      natural.height > boardRef.current.clientHeight)
