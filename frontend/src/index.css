@@ -355,6 +355,26 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }
 
+/* --- Typing caret ---------------------------------------------------------
+   The blink is decoration. The resting state is opacity 1, so a browser that
+   never advances the keyframe shows a steady caret rather than losing it.   */
+[data-surface="landing"] .caret {
+  display: inline-block;
+  width: 3px;
+  height: 0.74em;
+  margin-left: 0.07em;
+  vertical-align: -0.04em;
+  background: var(--l-accent);
+  animation: caret-blink 1.06s steps(1) infinite;
+}
+@keyframes caret-blink {
+  0%, 45%   { opacity: 1; }
+  55%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-surface="landing"] .caret { animation: none; }
+}
+
 /* ===========================================================================
    Reveals — three techniques, none of which translate the element vertically.
      focus  blurred to sharp, the page coming into focus

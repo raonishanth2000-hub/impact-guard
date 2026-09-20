@@ -126,35 +126,79 @@ function Reveal({ children, delay = 0, variant = 'focus', className = '' }) {
   )
 }
 
+/** Motion is an enhancement here; the content is the point. */
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 /**
- * The headline, wiped in a word at a time.
+ * The headline, typed.
  *
- * Each word is its own clip-path sweep, so the line prints left to right the
- * way a readout does, rather than sliding in from below. Screen readers get the
- * whole string from the parent's aria-label; the spans are hidden from them so
- * the sentence is not announced word by word.
+ * Driven by a setInterval over a character count, not a CSS steps() animation:
+ * keyframes do not advance in this project's preview environment, and a
+ * headline that never finishes typing is a blank hero. State always lands.
+ *
+ * Both line boxes are rendered from the first paint, with a non-breaking space
+ * standing in for a line that has not been reached yet. Without that the block
+ * grows from one line to two mid-animation and shoves the whole page down.
+ *
+ * Screen readers get the finished sentence from aria-label on the h1; the
+ * animating spans are hidden from them, so nobody hears it a letter at a time.
  */
-function WipeHeadline({ lines, className = '', style, delay = 0, step = 90 }) {
-  let n = -1
+function TypeHeadline({ lines, className = '', style, speed = 34, startDelay = 260 }) {
+  const full = lines.join('\n')
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    if (prefersReducedMotion()) { setCount(full.length); return }
+
+    let i = 0
+    let interval
+    const start = setTimeout(() => {
+      interval = setInterval(() => {
+        i += 1
+        setCount(i)
+        if (i >= full.length) clearInterval(interval)
+      }, speed)
+    }, startDelay)
+
+    return () => { clearTimeout(start); clearInterval(interval) }
+  }, [full, speed, startDelay])
+
+  const typed = full.slice(0, count)
+  const typedLines = typed.split('\n')
+  const activeLine = typedLines.length - 1
+
   return (
-    <h1 className={className} style={style} aria-label={lines.join(' ')}>
-      {lines.map((line, li) => (
-        <span key={li} className="block" aria-hidden="true">
-          {line.split(' ').map((word) => {
-            n += 1
+    // The gradient lives on the VISIBLE layer, not the h1. background-clip:text
+    // paints the h1's background and clips it to the h1's own text; an
+    // absolutely positioned descendant inherits text-fill-color: transparent
+    // but does not get that clipped background, so the headline rendered
+    // completely invisible with only the caret showing.
+    <h1 className={className} aria-label={full}>
+      <span className="relative block">
+        {/* An invisible copy of the finished headline, purely to hold the box
+            open. Reserving one line box per logical line is not enough: at
+            phone width each of these wraps to two, so the hero grew 91px
+            mid-animation and shoved the page down. This reserves whatever the
+            final text actually occupies, at any width. */}
+        <span aria-hidden="true" className="invisible">
+          {lines.map((line, i) => <span key={i} className="block">{line}</span>)}
+        </span>
+
+        <span aria-hidden="true" className="absolute inset-0" style={style}>
+          {lines.map((line, i) => {
+            const text = typedLines[i] ?? ''
             return (
-              <Reveal
-                key={`${li}-${n}`}
-                variant="wipe"
-                delay={delay + n * step}
-                className="inline-block"
-              >
-                {word}&nbsp;
-              </Reveal>
+              <span key={i} className="block">
+                {text || '\u00A0'}
+                {i === activeLine && <span className="caret" />}
+              </span>
             )
           })}
         </span>
-      ))}
+      </span>
     </h1>
   )
 }
@@ -356,7 +400,7 @@ const Hero = memo(() => (
         </aside>
       </Reveal>
 
-      <WipeHeadline
+      <TypeHeadline
         lines={['Find what changed', 'before you start debugging']}
         delay={60}
         className="display mb-6 max-w-3xl pb-[0.44em] text-center text-[40px] font-semibold
