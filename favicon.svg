@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Impact Guard">
+  <!--
+    Favicon build of the header mark.
+
+    Redrawn rather than reused: the header logo has 1.7px strokes and a
+    45%-opacity timeline that disappear entirely at 16px. Here the strokes are
+    thicker, the timeline is opaque, and the mark sits on a dark tile so it
+    holds its shape against both light and dark browser chrome.
+  -->
+  <rect width="32" height="32" rx="7" fill="#14100E"/>
+  <!-- Timeline running into the lens: the "changes before the incident". -->
+  <path d="M4.5 22.5h3.2l3-8 2.4 5.4"
+        fill="none" stroke="#F6F4EF" stroke-width="2.3"
+        stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+  <!-- The lens. -->
+  <circle cx="19.5" cy="13.5" r="6" fill="none" stroke="#FF8A3D" stroke-width="2.6"/>
+  <path d="m24 18 3.4 3.4" stroke="#FF8A3D" stroke-width="2.8" stroke-linecap="round"/>
+</svg>
