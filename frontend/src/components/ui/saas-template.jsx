@@ -187,7 +187,9 @@ function TypeHeadline({ lines, className = '', style, speed = 34, startDelay = 2
           {lines.map((line, i) => <span key={i} className="block">{line}</span>)}
         </span>
 
-        <span aria-hidden="true" className="absolute inset-0" style={style}>
+        <span aria-hidden="true"
+              className="absolute left-0 right-0 top-0 pb-[0.44em]"
+              style={style}>
           {lines.map((line, i) => {
             const text = typedLines[i] ?? ''
             return (
