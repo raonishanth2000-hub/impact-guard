@@ -11,8 +11,11 @@ import { CircleAlert, RotateCw, Clock } from 'lucide-react'
 function Skeleton() {
   return (
     <div aria-busy="true" aria-label="Analysing change">
-      <p className="mb-5 text-[13px] text-ink-2" role="status">
+      <p className="mb-1.5 text-[13px] text-ink" role="status">
         Analysing changes around the incident time…
+      </p>
+      <p className="mb-5 text-[12px] text-ink-3">
+        Ranking recent activity by timing and resource sensitivity.
       </p>
       <div className="skeleton h-3 w-24" />
       <div className="skeleton mt-4 h-9 w-[420px] max-w-full" />

@@ -23,7 +23,7 @@ export default function IncidentBanner({ incident, stats, changes, dataSource })
   const metrics = [
     { label: 'Potentially relevant', value: stats.high, emphasis: stats.high > 0 },
     { label: 'Changes detected', value: stats.total },
-    { label: 'Before incident', value: stats.before_incident },
+    { label: 'Changes before incident', value: stats.before_incident },
     { label: 'Investigation window', value: `${incident.lookback_minutes} min`, mono: false },
   ]
 

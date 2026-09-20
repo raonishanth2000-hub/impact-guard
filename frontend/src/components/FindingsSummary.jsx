@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { Section, Tag, RelevanceBadge } from './primitives'
 import { buildTopology } from '../lib/topology'
+import { formatClock12 } from '../lib/format'
 
 /**
  * The four questions, answered on the page where the investigation finishes.
@@ -83,10 +84,35 @@ export default function FindingsSummary({ result }) {
           <p className="text-[13.5px] leading-relaxed text-ink">
             {lead.narrative?.plain || lead.action_summary}
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
             <RelevanceBadge relevance={lead.relevance} />
             <span className="font-mono text-[11.5px] text-ink-2">{lead.resource_id}</span>
           </div>
+
+          {/* Who, when and which service. Every value comes from the event; a
+              field that is absent is omitted rather than filled in. */}
+          <dl className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1.5 text-[11.5px]">
+            {lead.aws_service && (
+              <div className="flex gap-1.5">
+                <dt className="text-ink-3">Service</dt>
+                <dd className="text-ink-2">{lead.aws_service}</dd>
+              </div>
+            )}
+            {lead.actor && (
+              <div className="flex gap-1.5">
+                <dt className="text-ink-3">Made by</dt>
+                <dd className="font-mono text-ink-2">{lead.actor}</dd>
+              </div>
+            )}
+            {lead.event_time && (
+              <div className="flex gap-1.5">
+                <dt className="text-ink-3">When</dt>
+                <dd className="font-mono text-ink-2 tnum">
+                  {formatClock12(lead.event_time)}
+                </dd>
+              </div>
+            )}
+          </dl>
         </Answer>
 
         <Answer index={2} question="What could it affect?" to="/graph" linkLabel="Topology">

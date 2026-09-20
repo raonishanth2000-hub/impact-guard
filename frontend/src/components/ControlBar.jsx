@@ -33,12 +33,20 @@ function PasteTimestamp({ onParsed }) {
   }
 
   return (
-    <div className="relative mt-1.5">
+    <details className="group/paste mt-1.5">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-1
+                          text-[11.5px] text-ink-3 transition-colors duration-150
+                          hover:text-ink-2">
+        <ClipboardPaste size={11} strokeWidth={1.75} aria-hidden="true" />
+        Paste a timestamp
+      </summary>
+
+      <div className="relative mt-1.5">
       <input
         type="text"
         value={raw}
         aria-label="Paste an ISO timestamp"
-        placeholder="or paste 2026-09-19T13:54:45Z"
+        placeholder="2026-09-19T13:54:45Z"
         onChange={(e) => { setRaw(e.target.value); setState('idle') }}
         onPaste={(e) => {
           // Apply immediately on paste — retyping is the thing being avoided.
@@ -60,7 +68,8 @@ function PasteTimestamp({ onParsed }) {
       {state === 'bad' && (
         <p className="mt-1 text-[11px] text-severe">Not a timestamp I can read.</p>
       )}
-    </div>
+      </div>
+    </details>
   )
 }
 
