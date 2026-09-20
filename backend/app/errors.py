@@ -27,6 +27,17 @@ class ValidationError(ApiError):
     code = "validation_error"
 
 
+class InvalidJsonError(ValidationError):
+    """The request body could not be parsed.
+
+    Distinct from ValidationError so both transports report the same code for
+    the same failure: local_server.py already answered `invalid_json`, while
+    the Lambda swallowed the error entirely.
+    """
+
+    code = "invalid_json"
+
+
 class NotFoundError(ApiError):
     status_code = 404
     code = "not_found"

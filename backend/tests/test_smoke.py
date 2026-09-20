@@ -187,3 +187,54 @@ def test_dotenv_loader_ignores_a_missing_file():
     from app import config as cfg
 
     cfg._load_dotenv(paths=("/nonexistent/.env",))   # must not raise
+
+
+# --- transport parity -------------------------------------------------------
+# The local server and the Lambda share api.dispatch, but each parses the
+# request body itself. They drifted: malformed JSON was a 400 locally and a
+# silent 200 (running a DEFAULT investigation) in production. These pin them
+# together.
+
+def _lambda_event(body, *, b64=False):
+    return {"version": "2.0", "rawPath": "/investigate",
+            "requestContext": {"http": {"method": "POST"}, "stage": "$default"},
+            "body": body, "isBase64Encoded": b64}
+
+
+def test_lambda_rejects_malformed_json():
+    import lambda_handler
+    r = lambda_handler.handler(_lambda_event('{"broken'), None)
+    assert r["statusCode"] == 400, r
+    import json as _j
+    assert _j.loads(r["body"])["error"]["code"] == "invalid_json"
+
+
+def test_lambda_rejects_a_non_object_body():
+    import lambda_handler, json as _j
+    r = lambda_handler.handler(_lambda_event("[1,2,3]"), None)
+    assert r["statusCode"] == 400, r
+    assert _j.loads(r["body"])["error"]["code"] == "invalid_json"
+
+
+def test_lambda_rejects_bad_base64():
+    import lambda_handler, json as _j
+    r = lambda_handler.handler(_lambda_event("!!!not-base64!!!", b64=True), None)
+    assert r["statusCode"] == 400, r
+    assert _j.loads(r["body"])["error"]["code"] == "invalid_json"
+
+
+def test_lambda_still_accepts_an_empty_body():
+    """No body is a valid request: it means 'investigate now with defaults'."""
+    import lambda_handler
+    r = lambda_handler.handler(_lambda_event(None), None)
+    assert r["statusCode"] == 200, r
+
+
+def test_lambda_and_local_agree_on_malformed_json():
+    """Both transports must answer the same status and code."""
+    import lambda_handler, json as _j
+    lam = lambda_handler.handler(_lambda_event("{nope"), None)
+    # local_server.py's literal behaviour for the same input
+    local_status, local_code = 400, "invalid_json"
+    assert lam["statusCode"] == local_status
+    assert _j.loads(lam["body"])["error"]["code"] == local_code
