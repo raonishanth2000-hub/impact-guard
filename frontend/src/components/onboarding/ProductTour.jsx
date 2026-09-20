@@ -52,7 +52,6 @@ const STEPS = [
   },
   {
     id: 'timeline',
-    eyebrow: 'Step 1',
     title: 'See what changed',
     body: 'Recent AWS changes are laid out in order, with the incident marked in place, '
         + 'so you can see what happened in the minutes before it.',
@@ -61,17 +60,15 @@ const STEPS = [
   },
   {
     id: 'detail',
-    eyebrow: 'Step 2',
     title: 'Understand the change',
     body: 'Open a change to see the resource, the action, when it happened and who made '
         + 'it — plus the request the caller actually sent.',
     route: '/changes',
-    target: '[role="dialog"]',
+    target: '[data-tour="detail"]',
     openFirstChange: true,
   },
   {
     id: 'insight',
-    eyebrow: 'Step 3',
     title: 'Read the assessment',
     body: 'Each ranked change comes with the evidence behind it: why it may be related, '
         + 'and what to check next. Nothing here claims a change caused the incident.',
@@ -80,7 +77,6 @@ const STEPS = [
   },
   {
     id: 'incident',
-    eyebrow: 'Step 4',
     title: 'Investigate an incident',
     body: 'Give it the moment the problem started and it finds the potentially relevant '
         + 'changes around that time.',

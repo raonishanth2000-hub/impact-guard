@@ -126,6 +126,7 @@ export default function ChangeDetail({ change, onClose }) {
       <aside
         ref={panelRef}
         role="dialog"
+        data-tour="detail"
         aria-modal="true"
         aria-labelledby="detail-title"
         className="slide-in relative flex h-full w-full max-w-[460px] flex-col
