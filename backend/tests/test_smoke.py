@@ -280,10 +280,15 @@ def test_demo_mode_never_reaches_cloudtrail(monkeypatch):
 
 
 def test_health_hides_credential_details_on_a_public_deployment():
-    """access_key_hint, provider and profile must not reach the internet."""
+    """access_key_hint, provider and profile must not reach the internet.
+
+    Gated on the runtime, not on the data mode: an earlier version keyed this
+    to LIVE_AWS_ALLOWED, so turning live AWS on silently republished the
+    access-key prefix.
+    """
     from app import api, config
-    original = config.LIVE_AWS_ALLOWED
-    config.LIVE_AWS_ALLOWED = False
+    original = config.EXPOSE_CREDENTIAL_DIAGNOSTICS
+    config.EXPOSE_CREDENTIAL_DIAGNOSTICS = False
     try:
         _status, body = api.health({}, {})
         assert "credentials" not in body, "credential diagnostics exposed publicly"
@@ -291,19 +296,35 @@ def test_health_hides_credential_details_on_a_public_deployment():
         for leak in ("access_key_hint", "ASIA", "AKIA", "session_region"):
             assert leak not in blob, f"{leak} leaked through /health"
     finally:
-        _restore("LIVE_AWS_ALLOWED", original)
+        _restore("EXPOSE_CREDENTIAL_DIAGNOSTICS", original)
 
 
-def test_health_keeps_credential_details_when_live_aws_is_enabled():
-    """They are genuinely useful locally; only the public path withholds them."""
+def test_health_keeps_credential_details_when_running_locally():
+    """They are genuinely useful locally; only the hosted path withholds them."""
     from app import api, config
-    original = config.LIVE_AWS_ALLOWED
-    config.LIVE_AWS_ALLOWED = True
+    original = config.EXPOSE_CREDENTIAL_DIAGNOSTICS
+    config.EXPOSE_CREDENTIAL_DIAGNOSTICS = True
     try:
         _status, body = api.health({}, {})
         assert "credentials" in body
     finally:
-        _restore("LIVE_AWS_ALLOWED", original)
+        _restore("EXPOSE_CREDENTIAL_DIAGNOSTICS", original)
+
+
+def test_live_mode_does_not_republish_credentials():
+    """Enabling live AWS must not, on its own, expose credential diagnostics."""
+    from app import api, config
+    live_orig = config.LIVE_AWS_ALLOWED
+    expose_orig = config.EXPOSE_CREDENTIAL_DIAGNOSTICS
+    config.LIVE_AWS_ALLOWED = True            # as the hosted deployment now is
+    config.EXPOSE_CREDENTIAL_DIAGNOSTICS = False   # ...but still on Lambda
+    try:
+        _status, body = api.health({}, {})
+        assert "credentials" not in body
+        assert "access_key_hint" not in str(body)
+    finally:
+        _restore("LIVE_AWS_ALLOWED", live_orig)
+        _restore("EXPOSE_CREDENTIAL_DIAGNOSTICS", expose_orig)
 
 
 def test_scoring_does_not_claim_an_unestablished_request_path():

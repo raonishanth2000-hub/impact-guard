@@ -65,6 +65,12 @@ if DATA_MODE not in ("demo", "live"):
     DATA_MODE = "demo"
 LIVE_AWS_ALLOWED = DATA_MODE == "live"
 
+# Anything reachable from the internet must not describe its own credentials.
+# Lambda always sets this variable, so it identifies the hosted deployment
+# without needing another flag that can drift out of step.
+RUNNING_ON_LAMBDA = bool(os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+EXPOSE_CREDENTIAL_DIAGNOSTICS = not RUNNING_ON_LAMBDA
+
 AWS_REGION = os.environ.get("AWS_REGION", "ap-south-1").strip()
 
 # Bedrock is configured purely through env vars so the model can be swapped

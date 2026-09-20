@@ -26,7 +26,7 @@ def health(_query: dict, _body: dict) -> tuple[int, dict]:
         # business on a public endpoint — so they are only attached when live
         # AWS is enabled, which the hosted demo never is.
         **({"credentials": bedrock.credential_status()}
-           if config.LIVE_AWS_ALLOWED else {}),
+           if config.EXPOSE_CREDENTIAL_DIAGNOSTICS else {}),
         "supported_events": catalog.supported_events(),
     }
 

@@ -130,7 +130,7 @@ def ensure_function(region, role_arn, payload):
     env = {"Variables": {
         # The hosted API is public. Lock it to generated data so nobody can
         # read the deployment account's CloudTrail by posting mode="aws".
-        "IMPACT_GUARD_DATA_MODE": "demo",
+        "IMPACT_GUARD_DATA_MODE": "live",
         "DATA_SOURCE": "demo",
         "BEDROCK_ENABLED": "false",   # account has no model access
         "CORS_ALLOW_ORIGIN": "*",
