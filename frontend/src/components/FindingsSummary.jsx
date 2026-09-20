@@ -101,12 +101,13 @@ export default function FindingsSummary({ result }) {
               {/* The chain, read the way the brief asks: changed resource first,
                   then what it connects to, with the evidence for each link. */}
               <ol className="mt-2.5 space-y-1.5">
-                <li className="flex items-center gap-2">
+                <li className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <Tag tone="accent">{lead.resource_id}</Tag>
                   <span className="text-[11.5px] text-ink-3">changed</span>
                 </li>
                 {connected.slice(0, 4).map((c) => (
-                  <li key={c.id} className="flex items-center gap-2 pl-3">
+                  <li key={c.id}
+                      className="flex flex-wrap items-center gap-x-2 gap-y-1 pl-3">
                     <span aria-hidden="true" className="text-ink-3">↳</span>
                     <Tag>{c.id}</Tag>
                     <span className="text-[11.5px] text-ink-3">{c.evidence}</span>
