@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Search, Play, LoaderCircle, ClipboardPaste, Check } from 'lucide-react'
 import { Button, Field, INPUT_CLASS } from './primitives'
 import { toLocalInputValue } from '../lib/format'
+import { useInvestigation } from '../state/InvestigationContext'
 
 const WINDOWS = [
   { value: 15, label: '15 minutes' },
@@ -88,7 +89,13 @@ export default function ControlBar({
   onInvestigate, onLoadDemo,
   loading,
 }) {
-  return (
+    // The hosted demo is locked to generated data, and the API refuses a
+  // live request outright. Offering a control that will be rejected is
+  // worse than not offering it.
+  const { health } = useInvestigation()
+  const liveAllowed = health?.config?.live_aws_allowed !== false
+
+return (
     <section
       aria-label="Investigation parameters"
       className="rounded-card border border-rule bg-surface p-5 shadow-subtle"
@@ -158,7 +165,7 @@ export default function ControlBar({
               >
                 {[
                   { key: 'demo', label: 'Demo' },
-                  { key: 'aws', label: 'Live AWS' },
+                  { key: 'aws', label: 'Live AWS', disabled: !liveAllowed },
                 ].map((m) => {
                   const on = mode === m.key
                   return (
@@ -166,11 +173,18 @@ export default function ControlBar({
                       key={m.key}
                       id={`source-${m.key}`}
                       type="button"
-                      onClick={() => setMode(m.key)}
+                      onClick={() => !m.disabled && setMode(m.key)}
                       aria-pressed={on}
+                      disabled={m.disabled}
+                      title={m.disabled
+                        ? 'This deployment serves sample data only. Run it locally with '
+                          + 'IMPACT_GUARD_DATA_MODE=live to read your own AWS account.'
+                        : undefined}
                       className={`h-full whitespace-nowrap rounded-[4px] px-2.5 text-[12.5px]
-                                  transition-colors duration-150 cursor-pointer ${
-                        on ? 'bg-sunken font-medium text-ink' : 'text-ink-2 hover:text-ink'
+                                  transition-colors duration-150 ${
+                        m.disabled ? 'cursor-not-allowed text-ink-3/60'
+                        : on ? 'cursor-pointer bg-sunken font-medium text-ink'
+                        : 'cursor-pointer text-ink-2 hover:text-ink'
                       }`}
                     >
                       {m.label}

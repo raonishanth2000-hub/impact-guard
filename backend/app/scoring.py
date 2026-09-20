@@ -97,7 +97,13 @@ def score_change(
     criticality = min(catalog.service_criticality(change.aws_service), MAX_CRITICALITY)
     signals["service_criticality"] = criticality
     if criticality >= 10:
-        reasons.append(f"Affects {change.aws_service}, a service on the application request path")
+        # This rule knows the service, not the architecture. It never
+        # establishes that the service is on any request path, so the
+        # reason now states the heuristic instead of asserting a fact.
+        reasons.append(
+            f"Targets {change.aws_service}, which the ranking rules treat as "
+            "operationally significant"
+        )
 
     # 3. Destructive action.
     destructive = MAX_DESTRUCTIVE if (spec and spec.destructive) else 0

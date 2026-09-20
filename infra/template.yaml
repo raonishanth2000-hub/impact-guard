@@ -12,7 +12,7 @@ Parameters:
     Description: aws = live CloudTrail, demo = generated sample events.
   BedrockModelId:
     Type: String
-    Default: anthropic.claude-3-5-sonnet-20240620-v1:0
+    Default: anthropic.claude-sonnet-4-5-20250929-v1:0
     Description: Must be enabled in your account under Bedrock > Model access.
   BedrockRegion:
     Type: String

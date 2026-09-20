@@ -21,7 +21,12 @@ def health(_query: dict, _body: dict) -> tuple[int, dict]:
         "service": "impact-guard",
         "time": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "config": config.public_config(),
-        "credentials": bedrock.credential_status(),
+        # Credential diagnostics named the provider, the profile and the first
+        # four characters of the access key. Useful locally, and nobody else's
+        # business on a public endpoint — so they are only attached when live
+        # AWS is enabled, which the hosted demo never is.
+        **({"credentials": bedrock.credential_status()}
+           if config.LIVE_AWS_ALLOWED else {}),
         "supported_events": catalog.supported_events(),
     }
 

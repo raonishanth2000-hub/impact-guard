@@ -521,7 +521,7 @@ const STEPS = [
   { n: '02', Icon: GitCompare, t: 'Normalise',
     d: 'Nested API records become one readable sentence: what changed, which resource, who did it.' },
   { n: '03', Icon: Clock, t: 'Rank',
-    d: 'Additive rules — time proximity, blast radius, production naming, destructiveness.' },
+    d: 'Additive rules — time proximity, service criticality, production naming, destructiveness.' },
   { n: '04', Icon: Sparkles, t: 'Explain',
     d: 'Bedrock writes the assessment. If it is unavailable, the rule-derived analysis stands alone.' },
 ]

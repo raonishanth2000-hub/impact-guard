@@ -128,7 +128,10 @@ def ensure_role(region):
 def ensure_function(region, role_arn, payload):
     lam = _c("lambda", region)
     env = {"Variables": {
-        "DATA_SOURCE": "aws",
+        # The hosted API is public. Lock it to generated data so nobody can
+        # read the deployment account's CloudTrail by posting mode="aws".
+        "IMPACT_GUARD_DATA_MODE": "demo",
+        "DATA_SOURCE": "demo",
         "BEDROCK_ENABLED": "false",   # account has no model access
         "CORS_ALLOW_ORIGIN": "*",
     }}

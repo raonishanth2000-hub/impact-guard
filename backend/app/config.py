@@ -56,6 +56,15 @@ _load_dotenv()
 
 DATA_SOURCE = os.environ.get("DATA_SOURCE", "demo").strip().lower()
 
+# The hosted demo is open to the internet, so it must not be able to read the
+# deployment account's CloudTrail on request. "demo" locks the API to generated
+# events regardless of what a caller asks for; "live" allows the per-request
+# override that local and private deployments rely on. Defaults to the safe one.
+DATA_MODE = os.environ.get("IMPACT_GUARD_DATA_MODE", "demo").strip().lower()
+if DATA_MODE not in ("demo", "live"):
+    DATA_MODE = "demo"
+LIVE_AWS_ALLOWED = DATA_MODE == "live"
+
 AWS_REGION = os.environ.get("AWS_REGION", "ap-south-1").strip()
 
 # Bedrock is configured purely through env vars so the model can be swapped
@@ -68,7 +77,7 @@ BEDROCK_REGION = os.environ.get("BEDROCK_REGION", AWS_REGION).strip()
 # everything else", which is the normal case.
 BEDROCK_PROFILE = os.environ.get("BEDROCK_PROFILE", "").strip()
 BEDROCK_MODEL_ID = os.environ.get(
-    "BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0"
+    "BEDROCK_MODEL_ID", "anthropic.claude-sonnet-4-5-20250929-v1:0"
 ).strip()
 BEDROCK_MAX_TOKENS = int(os.environ.get("BEDROCK_MAX_TOKENS", "1400"))
 BEDROCK_TEMPERATURE = float(os.environ.get("BEDROCK_TEMPERATURE", "0.2"))
@@ -88,6 +97,8 @@ def public_config() -> dict:
     """Safe-to-expose settings for the /health endpoint. No secrets."""
     return {
         "data_source": DATA_SOURCE,
+        "data_mode": DATA_MODE,
+        "live_aws_allowed": LIVE_AWS_ALLOWED,
         "aws_region": AWS_REGION,
         "bedrock_region": BEDROCK_REGION,
         "bedrock_profile": BEDROCK_PROFILE or None,

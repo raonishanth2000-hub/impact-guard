@@ -139,19 +139,29 @@ def test_empty_account_is_not_an_error():
 
 
 def test_live_mode_end_to_end_through_investigate():
-    """The whole pipeline on live-shaped data, with Bedrock switched off."""
-    when = NOW - timedelta(minutes=3)
-    c = FakeClient(pages=[{"Events": [
-        _real_shaped_record("ModifyDBInstance", when),
-        _real_shaped_record("AuthorizeSecurityGroupIngress", NOW - timedelta(minutes=8)),
-    ]}])
-    result = _with(c, lambda: investigation.investigate(
-        NOW.isoformat().replace("+00:00", "Z"), 30, "Checkout slow", "aws", explain=False))
+    # Live AWS is gated behind IMPACT_GUARD_DATA_MODE so the public demo cannot
+    # read the deployment account. This test is about the CloudTrail path, so
+    # it opts in explicitly.
+    from app import config as _cfg
+    _original = _cfg.LIVE_AWS_ALLOWED
+    _cfg.LIVE_AWS_ALLOWED = True
+    try:
+        """The whole pipeline on live-shaped data, with Bedrock switched off."""
+        when = NOW - timedelta(minutes=3)
+        c = FakeClient(pages=[{"Events": [
+            _real_shaped_record("ModifyDBInstance", when),
+            _real_shaped_record("AuthorizeSecurityGroupIngress", NOW - timedelta(minutes=8)),
+        ]}])
+        result = _with(c, lambda: investigation.investigate(
+            NOW.isoformat().replace("+00:00", "Z"), 30, "Checkout slow", "aws", explain=False))
 
-    assert result["data_source"] == "aws"
-    assert result["stats"]["total"] == 2
-    assert result["changes"][0]["narrative"]["plain"], "narrative must work on live data too"
-    assert result["briefing"]["headline"]
+        assert result["data_source"] == "aws"
+        assert result["stats"]["total"] == 2
+        assert result["changes"][0]["narrative"]["plain"], "narrative must work on live data too"
+        assert result["briefing"]["headline"]
+    finally:
+        _cfg.LIVE_AWS_ALLOWED = _original
+
 
 
 def main():

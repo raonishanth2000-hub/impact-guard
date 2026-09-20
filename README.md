@@ -60,7 +60,7 @@ investigation tool. Specifically:
 |---|---|
 | Answers "show me API calls matching this filter" | Answers "what changed near 10:42 that might touch checkout" |
 | Returns deeply nested raw JSON | Returns one readable sentence per change |
-| Every event looks equally important | Ranks by proximity, blast radius and sensitivity, and shows why |
+| Every event looks equally important | Ranks by time proximity, service criticality and change sensitivity, and shows why |
 | Actor is buried in `userIdentity.sessionContext.sessionIssuer.userName` | Actor is a column: `deploy-role` |
 | No notion of an incident | The incident is the anchor the whole view is organised around |
 | Failed calls look like successful ones | Failed calls are damped — they changed nothing |
@@ -221,6 +221,31 @@ Every change shows the signals that scored it — timing, service criticality,
 whether the resource looks production-like. Nothing says a change *caused* the
 incident, only that it is worth checking. If the top result is not the obvious
 suspect, the "Why" panel will tell you exactly which rule put it there.
+
+
+## Demo mode and live AWS mode
+
+Impact Guard runs in one of two modes, chosen by an environment variable:
+
+```bash
+IMPACT_GUARD_DATA_MODE=demo   # generated sample events (default)
+IMPACT_GUARD_DATA_MODE=live   # read CloudTrail from the configured account
+```
+
+**The default is `demo`, and the hosted demo is locked to it.** That endpoint is
+public, so live mode is refused server-side rather than merely hidden in the UI —
+otherwise anyone could post `mode: "aws"` and read the deployment account's
+CloudTrail. On a demo deployment the `/health` response also withholds credential
+diagnostics (provider, profile, access-key prefix); those are only attached when
+live mode is enabled.
+
+To investigate your own account, run it locally:
+
+```bash
+IMPACT_GUARD_DATA_MODE=live DATA_SOURCE=aws ./run.sh
+```
+
+Demo mode needs no AWS credentials, no Bedrock access and no IAM setup.
 
 ## 6. How AI is used
 

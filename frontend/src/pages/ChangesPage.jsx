@@ -8,7 +8,7 @@ export default function ChangesPage() {
     <PageFrame
       current="/changes"
       title="Ranked changes"
-      lede="Scored by timing, blast radius and resource sensitivity. Every ranking shows the rules behind it."
+      lede="Scored by time proximity, service criticality and change sensitivity. Every ranking shows the rules behind it."
     >
       <ChangeList
         changes={result.changes}

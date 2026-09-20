@@ -69,6 +69,14 @@ def resolve_data_source(requested: str | None) -> str:
     source = (requested or config.DATA_SOURCE or "demo").strip().lower()
     if source not in ("demo", "aws"):
         raise ValidationError("mode must be either 'demo' or 'aws'.")
+    if source == "aws" and not config.LIVE_AWS_ALLOWED:
+        # Enforced here rather than in the UI: the API is public, so hiding the
+        # control would not have stopped anyone posting mode="aws" directly.
+        raise ValidationError(
+            "This deployment serves generated sample data only.",
+            detail="Run it locally with IMPACT_GUARD_DATA_MODE=live to "
+                   "investigate your own AWS account.",
+        )
     return source
 
 

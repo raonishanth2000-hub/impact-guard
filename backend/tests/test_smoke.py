@@ -238,3 +238,95 @@ def test_lambda_and_local_agree_on_malformed_json():
     local_status, local_code = 400, "invalid_json"
     assert lam["statusCode"] == local_status
     assert _j.loads(lam["body"])["error"]["code"] == local_code
+
+
+# --- public-demo safety -----------------------------------------------------
+# The hosted API is open to the internet. These pin the two things that keep it
+# from becoming a window onto the deployment account's AWS activity.
+
+def _restore(attr, value):
+    from app import config
+    setattr(config, attr, value)
+
+
+def test_demo_deployment_refuses_live_aws_requests():
+    """Posting mode='aws' must not read real CloudTrail on a demo deployment."""
+    from app import config, investigation
+    from app.errors import ValidationError
+    original = config.LIVE_AWS_ALLOWED
+    config.LIVE_AWS_ALLOWED = False
+    try:
+        try:
+            investigation.resolve_data_source("aws")
+        except ValidationError as exc:
+            assert "sample data" in str(exc)
+        else:
+            raise AssertionError("live AWS was allowed on a demo-locked deployment")
+    finally:
+        _restore("LIVE_AWS_ALLOWED", original)
+
+
+def test_demo_mode_never_reaches_cloudtrail(monkeypatch):
+    """Demo mode must be generated data, not a live API call."""
+    from app import cloudtrail, investigation
+
+    def explode(*_a, **_k):
+        raise AssertionError("demo mode called the live CloudTrail API")
+
+    monkeypatch.setattr(cloudtrail, "fetch_events", explode)
+    out = investigation.investigate("2026-09-19T10:00:00Z", 30, None, "demo", explain=False)
+    assert out["data_source"] == "demo"
+    assert out["stats"]["total"] > 0
+
+
+def test_health_hides_credential_details_on_a_public_deployment():
+    """access_key_hint, provider and profile must not reach the internet."""
+    from app import api, config
+    original = config.LIVE_AWS_ALLOWED
+    config.LIVE_AWS_ALLOWED = False
+    try:
+        _status, body = api.health({}, {})
+        assert "credentials" not in body, "credential diagnostics exposed publicly"
+        blob = str(body)
+        for leak in ("access_key_hint", "ASIA", "AKIA", "session_region"):
+            assert leak not in blob, f"{leak} leaked through /health"
+    finally:
+        _restore("LIVE_AWS_ALLOWED", original)
+
+
+def test_health_keeps_credential_details_when_live_aws_is_enabled():
+    """They are genuinely useful locally; only the public path withholds them."""
+    from app import api, config
+    original = config.LIVE_AWS_ALLOWED
+    config.LIVE_AWS_ALLOWED = True
+    try:
+        _status, body = api.health({}, {})
+        assert "credentials" in body
+    finally:
+        _restore("LIVE_AWS_ALLOWED", original)
+
+
+def test_scoring_does_not_claim_an_unestablished_request_path():
+    """The engine knows the service, not the architecture.
+
+    "a service on the application request path" asserted a relationship the
+    code never establishes. The reason must describe the heuristic instead.
+    """
+    from app import scoring
+    from datetime import datetime, timedelta, timezone
+    from app.models import NormalizedChange
+
+    incident = datetime(2026, 9, 19, 10, 30, tzinfo=timezone.utc)
+    change = NormalizedChange(
+        event_id="e1", event_time=incident - timedelta(minutes=2),
+        event_name="ModifyDBInstance", aws_service="RDS",
+        resource_id="prod-orders-db", resource_type="DB instance",
+        actor="deploy-role", actor_type="AssumedRole", region="ap-south-1",
+        source_ip="10.0.0.1", user_agent="aws-cli", error_code=None,
+        change_detail={}, action_summary="Modified RDS database instance",
+        category="configuration", known_event=True,
+    )
+    scored = scoring.score_and_rank([change], incident, 30)[0]
+    joined = " ".join(scored.reasons)
+    assert "request path" not in joined, "claims a relationship it never established"
+    assert "operationally significant" in joined
