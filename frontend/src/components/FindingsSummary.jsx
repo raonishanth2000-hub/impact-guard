@@ -50,11 +50,24 @@ export default function FindingsSummary({ result }) {
   const lead = changes.find((c) => c.occurred_before_incident) ?? changes[0]
   if (!lead) return null
 
-  // Edges come from payload evidence in lib/topology.js — a connection string
-  // or a port rule actually present in the event. Nothing is assumed, so when
-  // there is no evidence this legitimately reports none.
-  const { nodes, edges } = buildTopology(changes)
-  const downstream = edges.filter((e) => e.source === lead.resource_id)
+  // Edges come from payload evidence in lib/topology.js — a resource named in
+  // another's payload, or a security rule opening a known database port at a
+  // matching engine. Nothing is assumed.
+  //
+  // Direction is not meaningful for "what else is involved": a security group
+  // rule is recorded as group -> database, so the changed database is the
+  // TARGET of its own dependency. Filtering on source alone reported "no
+  // dependency" while the topology view showed several.
+  const { edges } = buildTopology(changes)
+  const related = edges
+    .filter((e) => e.source === lead.resource_id || e.target === lead.resource_id)
+    .map((e) => ({
+      id: e.source === lead.resource_id ? e.target : e.source,
+      evidence: e.evidence?.label ?? 'related',
+    }))
+  const seen = new Set()
+  const connected = related.filter((r) => !seen.has(r.id) && seen.add(r.id))
+
   const services = [...new Set(changes
     .filter((c) => c.relevance === 'HIGH')
     .map((c) => c.aws_service)
@@ -77,18 +90,29 @@ export default function FindingsSummary({ result }) {
         </Answer>
 
         <Answer index={2} question="What could it affect?" to="/graph" linkLabel="Topology">
-          {downstream.length > 0 ? (
+          {connected.length > 0 ? (
             <>
               <p className="text-[13.5px] leading-relaxed text-ink">
-                {downstream.length} resource{downstream.length === 1 ? '' : 's'} reference
-                {downstream.length === 1 ? 's' : ''} this one, so {downstream.length === 1
-                  ? 'it is' : 'they are'} potentially affected.
+                {connected.length} other resource{connected.length === 1 ? '' : 's'}{' '}
+                {connected.length === 1 ? 'is' : 'are'} linked to this one in these
+                events, so {connected.length === 1 ? 'it is' : 'they are'} potentially
+                affected.
               </p>
-              <ul className="mt-2 flex flex-wrap gap-1.5">
-                {downstream.slice(0, 4).map((e) => (
-                  <li key={e.target}><Tag>{e.target}</Tag></li>
+              {/* The chain, read the way the brief asks: changed resource first,
+                  then what it connects to, with the evidence for each link. */}
+              <ol className="mt-2.5 space-y-1.5">
+                <li className="flex items-center gap-2">
+                  <Tag tone="accent">{lead.resource_id}</Tag>
+                  <span className="text-[11.5px] text-ink-3">changed</span>
+                </li>
+                {connected.slice(0, 4).map((c) => (
+                  <li key={c.id} className="flex items-center gap-2 pl-3">
+                    <span aria-hidden="true" className="text-ink-3">↳</span>
+                    <Tag>{c.id}</Tag>
+                    <span className="text-[11.5px] text-ink-3">{c.evidence}</span>
+                  </li>
                 ))}
-              </ul>
+              </ol>
             </>
           ) : (
             <p className="text-[13.5px] leading-relaxed text-ink-2">

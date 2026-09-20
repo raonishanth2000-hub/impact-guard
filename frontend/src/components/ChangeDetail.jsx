@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { X, ArrowRight, TriangleAlert, ClipboardCheck, User } from 'lucide-react'
+import { X, ArrowRight, TriangleAlert, ClipboardCheck, User , ChevronDown } from 'lucide-react'
 import { DataRow, RelevanceBadge, ServiceIcon, Tag } from './primitives'
 import {
   formatClock12, formatFull, formatOffset, isProduction, relevanceStyle,
@@ -14,6 +14,37 @@ function Group({ title, children }) {
       </h3>
       <div className="mt-2.5">{children}</div>
     </section>
+  )
+}
+
+/**
+ * A Group that starts closed.
+ *
+ * The panel showed nine sections at once, three of them raw technical record —
+ * request parameters, resource identifiers, and the caller's IP, user agent
+ * and timestamp. That is the evidence, and it has to stay reachable, but it is
+ * not what a reader needs in the first ten seconds. Closing it by default puts
+ * the plain-language answers first without removing anything.
+ *
+ * Deliberately <details> rather than state: it is keyboard and screen-reader
+ * accessible without any work, and find-in-page still reaches the contents.
+ */
+function CollapsibleGroup({ title, children }) {
+  return (
+    <details className="group/disc border-t border-rule">
+      <summary className="flex cursor-pointer list-none items-center justify-between
+                          gap-3 px-5 py-4">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">
+          {title}
+        </h3>
+        <ChevronDown
+          size={14} strokeWidth={1.75} aria-hidden="true"
+          className="shrink-0 text-ink-3 transition-transform duration-150
+                     group-open/disc:rotate-180 motion-reduce:transition-none"
+        />
+      </summary>
+      <div className="px-5 pb-4">{children}</div>
+    </details>
   )
 }
 
@@ -216,7 +247,7 @@ export default function ChangeDetail({ change, onClose }) {
             </>
           )}
 
-          <Group title="What was requested">
+          <CollapsibleGroup title="What was requested">
             {hasParams ? (
               <>
                 <dl className="divide-y divide-rule-soft">
@@ -234,9 +265,9 @@ export default function ChangeDetail({ change, onClose }) {
                 This event carried no request parameters worth surfacing.
               </p>
             )}
-          </Group>
+          </CollapsibleGroup>
 
-          <Group title="Resource">
+          <CollapsibleGroup title="Resource">
             <dl className="divide-y divide-rule-soft">
               <DataRow label="Identifier" value={change.resource_id} />
               <DataRow label="Type" value={change.resource_type} mono={false} />
@@ -244,7 +275,7 @@ export default function ChangeDetail({ change, onClose }) {
               <DataRow label="AWS event" value={change.event_name} />
               {change.error_code && <DataRow label="Error" value={change.error_code} />}
             </dl>
-          </Group>
+          </CollapsibleGroup>
 
           <Group title="Potential relevance">
             <p className="text-[12.5px] leading-relaxed text-ink-2">
@@ -300,7 +331,7 @@ export default function ChangeDetail({ change, onClose }) {
             </Group>
           )}
 
-          <Group title="Origin">
+          <CollapsibleGroup title="Origin">
             <dl className="divide-y divide-rule-soft">
               <DataRow label="Principal" value={change.actor} />
               <DataRow label="Identity" value={change.actor_type} mono={false} />
@@ -308,7 +339,7 @@ export default function ChangeDetail({ change, onClose }) {
               <DataRow label="User agent" value={change.user_agent} />
               <DataRow label="Timestamp" value={formatFull(change.event_time)} />
             </dl>
-          </Group>
+          </CollapsibleGroup>
         </div>
       </aside>
     </div>
