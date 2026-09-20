@@ -304,9 +304,9 @@ def explain(
         out["ai_available"] = False
         out["ai_status"] = STATUS_NOT_CONFIGURED
         out["ai_error"] = (
-            "Ranking, scoring and recommended checks are produced by the "
-            "deterministic engine and are unaffected. Model explanations are "
-            "off (BEDROCK_ENABLED=false)."
+            "This investigation is rule-based: the ranking, evidence and "
+            "recommended checks are produced by the deterministic engine. "
+            "AI-assisted explanation is not active for this account."
         )
         return out
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Play, Square, RotateCcw, Info, X } from 'lucide-react'
+import { Play, Square, RotateCcw, Info, X, Minimize2 } from 'lucide-react'
 
 import { Button } from '../components/primitives'
 import TopologyCanvas from '../components/graph/TopologyCanvas'
@@ -15,6 +15,25 @@ const REPLAY_STEP_MS = 1400
 
 function Canvas() {
   const { result, openDetail, selectedId } = useInvestigation()
+
+  // The board is laid out at its natural size inside a fixed-height panel, so
+  // a wide graph left nodes outside the visible area — reachable only by
+  // finding a scrollbar. "Fit" scales the whole board down to the panel;
+  // "Reset" returns it to 1:1. Deliberately not a pan-and-zoom implementation.
+  const boardRef = useRef(null)
+  const [natural, setNatural] = useState(null)
+  const [scale, setScale] = useState(1)
+
+  const fitToView = useCallback(() => {
+    const box = boardRef.current?.getBoundingClientRect()
+    if (!box || !natural?.width) return
+    const next = Math.min(1, box.width / natural.width, box.height / natural.height)
+    setScale(Number(next.toFixed(3)))
+  }, [natural])
+
+  const overflows = !!natural && !!boardRef.current &&
+    (natural.width > boardRef.current.clientWidth ||
+     natural.height > boardRef.current.clientHeight)
 
   const [focusId, setFocusId] = useState(null)
   const [activeEventId, setActiveEventId] = useState(null)
@@ -183,9 +202,28 @@ function Canvas() {
 
       {/* Graph + risk */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_248px]">
-        <div className="relative h-[460px] overflow-hidden rounded-card border border-rule
+        <div ref={boardRef}
+             className="relative h-[460px] overflow-hidden rounded-card border border-rule
                         bg-sunken/40 shadow-subtle">
+          {/* Only offered when the board genuinely does not fit; a control that
+              does nothing is worse than no control. */}
+          {(overflows || scale !== 1) && (
+            <div className="absolute right-3 top-3 z-10 flex gap-1.5">
+              <Button variant="secondary" size="sm" onClick={fitToView}
+                      disabled={scale !== 1 && !overflows}>
+                <Minimize2 size={13} strokeWidth={1.75} aria-hidden="true" />
+                Fit
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setScale(1)}
+                      disabled={scale === 1}>
+                <RotateCcw size={13} strokeWidth={1.75} aria-hidden="true" />
+                Reset
+              </Button>
+            </div>
+          )}
           <TopologyCanvas
+            scale={scale}
+            onMeasure={setNatural}
             nodes={graphNodes}
             edges={graphEdges}
             focusId={focusId}
@@ -245,6 +283,7 @@ function Canvas() {
       </div>
 
       <IncidentTimeline
+        changes={result.changes}
         timeline={timeline}
         activeId={activeEventId ?? selectedId}
         onSelect={selectEvent}

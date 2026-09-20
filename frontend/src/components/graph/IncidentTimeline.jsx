@@ -17,16 +17,40 @@ import { relevanceStyle, formatClock } from '../../lib/format'
  * leader line.
  */
 
-const LABEL_W = 118
+const LABEL_W = 150
 const GAP = 14
 // Must exceed the rendered label height (time line + title + padding ≈ 41px),
 // or stacked rows overlap by a few pixels and the packing looks broken.
-const ROW_H = 50
+const ROW_H = 74
 const RAIL_Y = 7
 
-export default function IncidentTimeline({ timeline, activeId, onSelect, cutoffTime }) {
+/**
+ * A label that fits.
+ *
+ * The full action summary ("Modified RDS database instance prod-orders-db")
+ * was being squeezed into a 118px box with `truncate`, producing "Modified RDS
+ * dat...". The resource is shown on its own line underneath, so drop it from
+ * the sentence and let what remains wrap over two lines. The untouched summary
+ * stays on the button's title for hover.
+ */
+function shortLabel(summary, resourceId) {
+  if (!summary) return ''
+  let text = summary
+  if (resourceId && text.includes(resourceId)) {
+    text = text.replace(resourceId, '').replace(/\s+(on|to|from|for|in)\s*$/i, '')
+  }
+  return text.replace(/\s{2,}/g, ' ').trim()
+}
+
+export default function IncidentTimeline({ timeline, activeId, onSelect, cutoffTime,
+                                           changes = [] }) {
+  const resourceFor = useMemo(() => {
+    const byId = new Map(changes.map((c) => [c.event_id, c.resource_id]))
+    return (id) => byId.get(id) || null
+  }, [changes])
   const scroller = useRef(null)
   const activeRef = useRef(null)
+  const incidentRef = useRef(null)
 
   const { placed, innerWidth, rowCount, min, span } = useMemo(() => {
     if (!timeline?.length) return { placed: [], innerWidth: 0, rowCount: 0, min: 0, span: 1 }
@@ -37,7 +61,7 @@ export default function IncidentTimeline({ timeline, activeId, onSelect, cutoffT
     const span = Math.max(1, max - min)
 
     // Widen the canvas as events multiply so packing has room to work.
-    const innerWidth = Math.max(760, timeline.length * 104)
+    const innerWidth = Math.max(760, timeline.length * 120)
     const usable = innerWidth - LABEL_W
 
     const rowEnds = []
@@ -63,6 +87,15 @@ export default function IncidentTimeline({ timeline, activeId, onSelect, cutoffT
       activeRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
     }
   }, [activeId])
+
+  // On first render nothing is selected, so the scroller stayed at the left and
+  // the incident marker — the one entry everything else is measured against —
+  // sat off-screen to the right. Centre it once, without smooth scrolling, so
+  // the timeline opens already anchored on the incident.
+  useEffect(() => {
+    if (activeId) return
+    incidentRef.current?.scrollIntoView({ block: 'nearest', inline: 'center' })
+  }, [activeId, placed])
 
   if (!timeline?.length) return null
 
@@ -125,7 +158,7 @@ export default function IncidentTimeline({ timeline, activeId, onSelect, cutoffT
                   />
 
                   <button
-                    ref={active ? activeRef : null}
+                    ref={active ? activeRef : (isIncident ? incidentRef : null)}
                     type="button"
                     onClick={() => onSelect?.(entry)}
                     aria-current={active ? 'true' : undefined}
@@ -141,11 +174,19 @@ export default function IncidentTimeline({ timeline, activeId, onSelect, cutoffT
                             : active ? 'text-ink' : 'text-ink-3'}`}>
                       {formatClock(entry.time)}
                     </time>
-                    <span className={`mt-0.5 block truncate text-[11px] leading-tight ${
+                    <span className={`mt-0.5 block text-[11px] leading-tight
+                                      [display:-webkit-box] [-webkit-box-orient:vertical]
+                                      [-webkit-line-clamp:2] overflow-hidden ${
                       isIncident ? 'font-medium text-severe'
                       : active ? 'text-ink' : 'text-ink-2'}`}>
-                      {entry.label}
+                      {shortLabel(entry.label, resourceFor(entry.event_id))}
                     </span>
+                    {resourceFor(entry.event_id) && (
+                      <span className="mt-0.5 block truncate font-mono text-[10px]
+                                       leading-tight text-ink-3">
+                        {resourceFor(entry.event_id)}
+                      </span>
+                    )}
                   </button>
                 </li>
               )

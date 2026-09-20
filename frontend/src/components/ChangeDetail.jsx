@@ -225,7 +225,7 @@ export default function ChangeDetail({ change, onClose }) {
                 </ul>
               </Group>
 
-              <Group title="Should have been checked first">
+              <Group title="Recommended checks">
                 <ol className="space-y-2">
                   {n.checklist.map((c, i) => (
                     <li key={i} className="flex gap-2.5">

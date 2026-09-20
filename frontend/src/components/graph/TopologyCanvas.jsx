@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { ServiceIcon } from '../primitives'
 
 /**
@@ -36,8 +36,7 @@ function edgePath(a, b) {
 
 export default function TopologyCanvas({
   nodes, edges, focusId, focusSet, revealed, pulsingId,
-  onSelectNode, onSelectEdge, onClearFocus,
-}) {
+  onSelectNode, onSelectEdge, onClearFocus, scale = 1, onMeasure }) {
   // Normalise to a positive coordinate space and size the canvas to fit.
   const { placed, width, height } = useMemo(() => {
     if (!nodes.length) return { placed: [], width: 0, height: 0 }
@@ -57,6 +56,10 @@ export default function TopologyCanvas({
 
   const byId = useMemo(() => new Map(placed.map((n) => [n.id, n])), [placed])
 
+  useEffect(() => {
+    if (width && height) onMeasure?.({ width, height })
+  }, [width, height, onMeasure])
+
   if (!placed.length) return null
 
   return (
@@ -66,7 +69,11 @@ export default function TopologyCanvas({
       role="group"
       aria-label="Resource topology"
     >
-      <div className="relative" style={{ width, height }}>
+      <div
+        className="relative origin-top-left transition-transform duration-200
+                   motion-reduce:transition-none"
+        style={{ width, height, transform: scale === 1 ? undefined : `scale(${scale})` }}
+      >
         {/* Links sit behind the cards. */}
         <svg
           className="absolute inset-0 overflow-visible"

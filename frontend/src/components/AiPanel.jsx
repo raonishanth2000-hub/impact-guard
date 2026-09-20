@@ -90,7 +90,6 @@ function ProvenanceNote({ status, message }) {
       <Info size={13} strokeWidth={1.75} aria-hidden="true"
             className="mt-[3px] shrink-0 text-ink-3" />
       <p className="min-w-0 flex-1 text-[11.5px] leading-relaxed text-ink-3">
-        Bedrock is not configured, so this assessment is rule-derived.{' '}
         <span className="text-ink-2">{message}</span>
       </p>
       <button

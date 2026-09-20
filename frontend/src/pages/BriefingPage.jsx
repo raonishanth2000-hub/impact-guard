@@ -178,9 +178,10 @@ export default function BriefingPage() {
               </ul>
             </Section>
 
-            <Section title="Pre-deployment checklist">
+            <Section title="Recommended checks">
               <p className="mb-3 text-[12px] leading-relaxed text-ink-3">
-                What should be confirmed before a change like this ships again.
+                What to verify about this change, and what to confirm before a similar
+                one is made again.
               </p>
               <ol className="space-y-2.5">
                 {lead.narrative.checklist.map((c, i) => (

@@ -60,6 +60,10 @@ export default function RiskScore({ risk, compact = false }) {
 
       <div className={`mt-1.5 text-[12.5px] font-medium ${band.text}`}>{band.label}</div>
 
+      <p className="mt-1.5 text-[11px] leading-relaxed text-ink-3">
+        Ranking score from timing and resource sensitivity — not a probability.
+      </p>
+
       <div className="mt-3 h-1 overflow-hidden rounded-full bg-sunken" role="presentation">
         <div className={`h-full rounded-full transition-[width] duration-700 ease-out ${band.bar}`}
              style={{ width: `${shown}%` }} />

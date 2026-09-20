@@ -138,9 +138,14 @@ def test_disabled_flag_skips_bedrock_entirely():
         client = FakeClient(text=GOOD_JSON)
         out = _with_client(client, lambda: bedrock.explain(_scored(), INCIDENT_ISO, None))
         assert out["ai_available"] is False
-        # Assert the stable contract, not the prose, so copy edits do not break this.
+        # Assert the stable contract, not the prose, so copy edits do not break
+        # this. The previous version asserted "BEDROCK_ENABLED" appeared in the
+        # message — prose, and the very thing the comment warns against. It is
+        # also the opposite of what we now want: an environment variable name
+        # is operator detail and should not reach a reader of the report.
         assert out["ai_status"] == bedrock.STATUS_NOT_CONFIGURED
-        assert "BEDROCK_ENABLED" in out["ai_error"]
+        assert out["ai_error"], "the reader must be told why there is no model output"
+        assert "BEDROCK_ENABLED" not in out["ai_error"], "leaks config into the UI"
         assert client.last_kwargs is None, "Bedrock must not be called when disabled"
     finally:
         bedrock.config.BEDROCK_ENABLED = original
