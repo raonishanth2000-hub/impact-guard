@@ -49,7 +49,47 @@ function Answer({ index, question, to, linkLabel, children }) {
 export default function FindingsSummary({ result }) {
   const changes = result.changes ?? []
   const lead = changes.find((c) => c.occurred_before_incident) ?? changes[0]
-  if (!lead) return null
+
+  // An empty window is a real answer, not a blank screen. This previously
+  // rendered nothing at all, so a reader who switched to Live AWS and happened
+  // to pick a quiet window saw four zeroes and no explanation — which reads as
+  // broken rather than as "nothing changed here".
+  if (!lead) {
+    const live = result.data_source === 'aws'
+    const minutes = result.incident?.lookback_minutes
+    return (
+      <Section title="What this means">
+        <div className="rounded-card border border-rule bg-surface px-5 py-6 shadow-subtle">
+          <h3 className="text-[14px] font-semibold text-ink">
+            No changes were recorded in this window
+          </h3>
+          <p className="mt-2 max-w-[62ch] text-[13px] leading-relaxed text-ink-2">
+            {live
+              ? `CloudTrail returned no control-plane changes in the ${minutes} minutes
+                 before this time. That is a finding in itself: whatever caused the
+                 incident, it was probably not a change made in this window.`
+              : `The sample data has no changes in the ${minutes} minutes before this
+                 time.`}
+          </p>
+          <ul className="mt-4 space-y-2">
+            {[
+              `Widen the lookback window — a change ${minutes} minutes out would be missed.`,
+              'Check the incident time is right, and in the timezone you expect.',
+              live
+                ? 'Confirm the region matches where the change was made — CloudTrail is per-region.'
+                : 'Switch the source to Live AWS to read your own account instead.',
+            ].map((hint) => (
+              <li key={hint} className="flex gap-2.5 text-[13px] leading-relaxed text-ink-2">
+                <span aria-hidden="true"
+                      className="mt-[7px] h-[3px] w-[3px] shrink-0 rounded-full bg-accent" />
+                {hint}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Section>
+    )
+  }
 
   // Edges come from payload evidence in lib/topology.js — a resource named in
   // another's payload, or a security rule opening a known database port at a
