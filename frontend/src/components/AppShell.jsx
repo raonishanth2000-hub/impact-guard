@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import {
-  LayoutDashboard, Activity, Share2, Layers, Lightbulb, ListChecks, Presentation,
+  LayoutDashboard, Activity, Share2, Layers, Lightbulb, ListChecks, Presentation, HelpCircle,
 } from 'lucide-react'
 import {
   Sidebar, SidebarBody, SidebarLink, CollapsibleLabel,
 } from '@/components/ui/sidebar'
 import { Mark } from './primitives'
 import { useInvestigation } from '../state/InvestigationContext'
+import { restartTour } from './onboarding/ProductTour'
 
 /**
  * Application shell.
@@ -50,6 +51,25 @@ function EnvFooter() {
 
   return (
     <div className="mt-auto border-t border-rule px-2.5 pt-3.5">
+      {/* Restart the onboarding tour. Sits with the environment status because
+          that is where the other "about this session" information lives, and it
+          collapses to its icon on the rail like every other row. */}
+      <button
+        type="button"
+        onClick={restartTour}
+        title="Take the tour again"
+        className="mb-3 flex w-full items-center gap-3 rounded-control py-1.5
+                   text-left transition-colors duration-150 cursor-pointer
+                   hover:bg-sunken focus-visible:outline-2
+                   focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+      >
+        <HelpCircle size={14} strokeWidth={1.75} aria-hidden="true"
+                    className="shrink-0 text-ink-3" />
+        <CollapsibleLabel className="text-[12.5px] text-ink-2">
+          Take the tour again
+        </CollapsibleLabel>
+      </button>
+
       <div className="flex items-center gap-3">
         <span
           className={`h-2 w-2 shrink-0 rounded-full ${health ? 'bg-positive' : 'bg-warning'}`}

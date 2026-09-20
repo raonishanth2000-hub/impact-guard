@@ -111,7 +111,8 @@ export default function IncidentTimeline({ timeline, activeId, onSelect, cutoffT
         </span>
       </div>
 
-      <div ref={scroller} className="overflow-x-auto px-4 pb-4 pt-4">
+      <div ref={scroller} data-tour="timeline"
+           className="overflow-x-auto px-4 pb-4 pt-4">
         <div className="relative" style={{ width: innerWidth, height }}>
           <div className="absolute left-0 right-0 bg-rule" style={{ top: RAIL_Y, height: 1 }}
                aria-hidden="true" />

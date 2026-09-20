@@ -13,6 +13,7 @@ import InsightPage from './pages/InsightPage'
 import ActionsPage from './pages/ActionsPage'
 import BriefingPage from './pages/BriefingPage'
 import RequireResult from './pages/RequireResult'
+import ProductTour from './components/onboarding/ProductTour'
 
 // React Flow is ~200KB. It is only needed on the topology route, so it is split
 // out and fetched on demand rather than taxing every other page's first load.
@@ -58,6 +59,10 @@ function Layout() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+
+      {/* First-run onboarding. Self-gating on localStorage; renders nothing
+          for a returning visitor. */}
+      <ProductTour />
 
       <ChangeDetail change={selectedChange} onClose={closeDetail} />
       <Toast toast={toast} onDismiss={dismissToast} />

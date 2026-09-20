@@ -181,7 +181,8 @@ export default function ControlBar({
             </Field>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Button onClick={onLoadDemo} disabled={loading} variant="secondary">
+              <Button onClick={onLoadDemo} disabled={loading} variant="secondary"
+                      data-tour="demo">
                 <Play size={14} strokeWidth={1.75} aria-hidden="true" />
                 Sample change
               </Button>
