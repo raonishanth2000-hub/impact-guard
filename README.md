@@ -176,6 +176,52 @@ returns HTTP 404. `404.html` is a copy of `index.html`, so the app boots and
 React Router renders the right view — the status code is simply wrong.
 CloudFront would return 200.
 
+
+## Run it on your own AWS account
+
+The hosted demo at [impact-guard.nishanthrao.com](https://impact-guard.nishanthrao.com)
+reads CloudTrail from **the account this API is deployed in** — not yours. To check
+it genuinely works, point it at your own account. It takes about two minutes and
+needs no AWS setup beyond credentials you already have.
+
+```bash
+git clone https://github.com/raonishanth2000-hub/impact-guard
+cd impact-guard
+aws configure            # any account; needs cloudtrail:LookupEvents
+./run.sh                 # installs deps on first run, then serves :8000 and :5273
+```
+
+`run.sh` installs frontend dependencies the first time and needs no `.env` —
+it starts in Demo mode, and you switch to Live AWS in the UI.
+
+Open <http://localhost:5273>, choose **Live AWS**, and give it a time when you
+know something changed in your account — a deploy, a console edit, anything.
+CloudTrail keeps 90 days of management events by default, so there is nothing
+to enable first and no trail to create.
+
+**No AWS account at all?** Leave the source on **Demo** and everything works:
+generated events, same engine, same ranking. Nothing is stubbed except the data.
+
+**Want something guaranteed to be in the window?** This makes real changes in your
+own account — a security group rule and a bucket policy, created and then removed,
+all free — so CloudTrail has something genuine to find:
+
+```bash
+python3 tools/seed_incident.py --apply --region <your-region>   # ~15 seconds
+python3 tools/seed_incident.py --cleanup --apply --region <your-region>
+```
+
+It is a dry run without `--apply`, only ever touches resources it created itself,
+and prints the exact incident time to paste into the app.
+
+### What to look for
+
+The ranking is the product, so check that it is defensible rather than magic.
+Every change shows the signals that scored it — timing, service criticality,
+whether the resource looks production-like. Nothing says a change *caused* the
+incident, only that it is worth checking. If the top result is not the obvious
+suspect, the "Why" panel will tell you exactly which rule put it there.
+
 ## 6. How AI is used
 
 Bedrock is called through the **Converse API**, so the model can be swapped by

@@ -95,13 +95,27 @@ def main() -> None:
     parser.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
     args = parser.parse_args()
 
+    # Bind before announcing, so a failure does not print a URL that never
+    # worked. A busy port is the commonest first-run problem and used to fail
+    # with a fourteen-frame traceback; say what happened and how to move on.
+    try:
+        server = ThreadingHTTPServer((args.host, args.port), Handler)
+    except OSError as exc:
+        if exc.errno in (48, 98):          # EADDRINUSE on macOS / Linux
+            sys.exit(
+                f"\nPort {args.port} is already in use.\n"
+                f"  Use another one:   python3 local_server.py --port 8001\n"
+                f"  Or free it:        lsof -ti :{args.port} | xargs kill\n"
+                f"  If you use another port, point the UI at it with\n"
+                f"  VITE_API_BASE=http://localhost:<port>\n"
+            )
+        raise
+
     log.info("Impact Guard API on http://%s:%s", args.host, args.port)
     log.info("data source: %s   bedrock: %s (%s)",
              config.DATA_SOURCE,
              "enabled" if config.BEDROCK_ENABLED else "disabled",
              config.BEDROCK_MODEL_ID)
-
-    server = ThreadingHTTPServer((args.host, args.port), Handler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

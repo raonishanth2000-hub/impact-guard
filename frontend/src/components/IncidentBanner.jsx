@@ -69,10 +69,23 @@ export default function IncidentBanner({ incident, stats, changes, dataSource })
         ))}
       </dl>
 
-      <p className="mt-3 text-[12px] text-ink-3">
+      <p className="mt-3 max-w-[70ch] text-[12px] leading-relaxed text-ink-3">
         {dataSource === 'demo'
           ? 'Sample events — no AWS account required.'
-          : 'Live CloudTrail management events.'}
+          : <>
+              Live CloudTrail management events, read from the account this API is
+              deployed in. To run it against your own account, clone the repo and
+              start it locally with your credentials — see{' '}
+              <a
+                href="https://github.com/raonishanth2000-hub/impact-guard#run-it-on-your-own-aws-account"
+                target="_blank" rel="noreferrer"
+                className="text-accent-ink underline underline-offset-2
+                           hover:text-ink focus-visible:outline-2
+                           focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+              >
+                Run it on your own AWS account
+              </a>.
+            </>}
       </p>
     </section>
   )
