@@ -119,7 +119,32 @@ return (
                 max={toLocalInputValue(new Date())}
                 className={`${INPUT_CLASS} font-mono tnum`}
               />
-              <PasteTimestamp onParsed={setIncidentTime} />
+              {/* The native picker segments into day/month/year and a 12-hour
+                  clock with AM/PM, which is easy to leave half-filled and
+                  awkward to drive by keyboard. These set the whole value in
+                  one click, so the common cases never need typing. */}
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                {[
+                  { label: '30 min ago', minutes: 30 },
+                  { label: '1 hour ago', minutes: 60 },
+                  { label: '3 hours ago', minutes: 180 },
+                ].map((q) => (
+                  <button
+                    key={q.label}
+                    type="button"
+                    onClick={() => setIncidentTime(
+                      toLocalInputValue(new Date(Date.now() - q.minutes * 60000)))}
+                    className="rounded-control text-[11.5px] text-ink-3 transition-colors
+                               duration-150 cursor-pointer hover:text-ink
+                               focus-visible:outline-2 focus-visible:outline-offset-2
+                               focus-visible:outline-accent-ink"
+                  >
+                    {q.label}
+                  </button>
+                ))}
+                <span className="text-rule" aria-hidden="true">|</span>
+                <PasteTimestamp onParsed={setIncidentTime} />
+              </div>
             </Field>
 
             <Field label="Lookback window" htmlFor="lookback">
