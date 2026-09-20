@@ -225,6 +225,31 @@ def delete_all(region):
     print("\nRemoved.")
 
 
+def _friendly_aws_error(exc) -> str | None:
+    """Turn common credential failures into one actionable line.
+
+    boto3 raises these from deep inside the signing path, so the default
+    traceback is ~60 frames of botocore internals with the real cause on the
+    last line. Same treatment as tools/seed_incident.py.
+    """
+    name, msg = type(exc).__name__, str(exc)
+    if "LoginRefreshRequired" in name or "session has expired" in msg:
+        return ("Your AWS session has expired.\n"
+                "  Either refresh it:        aws login\n"
+                "  Or use a static-key profile that does not expire:\n"
+                "      AWS_PROFILE=<profile> python3 tools/deploy.py ...")
+    if "NoCredentials" in name or "Unable to locate credentials" in msg:
+        return ("No AWS credentials found.\n"
+                "  Run 'aws configure --profile <name>', then re-run with "
+                "AWS_PROFILE=<name>.")
+    if "ExpiredToken" in msg or "InvalidClientTokenId" in msg:
+        return "Your AWS credentials are expired or invalid. Refresh them, then re-run."
+    if "AccessDenied" in name or "UnauthorizedOperation" in name:
+        return (f"Permission denied: {msg.split(': ', 1)[-1]}\n"
+                "  Deploying needs IAM, Lambda and API Gateway permissions.")
+    return None
+
+
 def verify_handler():
     """Fail before deploying if HANDLER does not name a real function.
 
@@ -249,6 +274,8 @@ def main():
     p.add_argument("--region", default="ap-south-1")
     p.add_argument("--apply", action="store_true")
     p.add_argument("--delete", action="store_true")
+    p.add_argument("--yes", action="store_true",
+                   help="skip the delete confirmation prompt")
     a = p.parse_args()
 
     if a.delete:
@@ -256,6 +283,20 @@ def main():
             print(f"DRY RUN - would delete the {NAME} api, function and role "
                   f"in {a.region}.\nRe-run with --apply.")
             return 0
+        # Deleting is not reversible from here: the API id changes on recreate,
+        # so any published VITE_API_BASE stops working. Worth one prompt.
+        print(f"About to delete from {a.region}:")
+        print(f"    HTTP API   {NAME}   (its URL will not come back)")
+        print(f"    Lambda     {NAME}")
+        print(f"    IAM role   {ROLE_NAME}")
+        if not a.yes:
+            try:
+                if input("\nType 'delete' to confirm: ").strip().lower() != "delete":
+                    print("Cancelled - nothing was removed.")
+                    return 1
+            except (EOFError, KeyboardInterrupt):
+                print("\nCancelled - nothing was removed.")
+                return 1
         delete_all(a.region)
         return 0
 
@@ -282,4 +323,12 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - top level, the message matters
+        friendly = _friendly_aws_error(exc)
+        if friendly:
+            sys.exit(f"\n{friendly}\n")
+        raise
